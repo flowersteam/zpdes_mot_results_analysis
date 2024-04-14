@@ -1,0 +1,74 @@
+{
+  "RT": {
+    "figsizex": 4,
+    "figsizey": 3,
+    "xmin": -100,
+    "xmax": 100,
+    "rope_end": 50,
+    "rope_start": -50,
+    "var_specifics": {
+      "RT_normal_hyper": ["mu_hyper", "sigma_hyper", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "RT_normal": ["mu", "sigma", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "switching_cost": ["switching_cost", "mu"],
+      "switching_cost_hyper": ["switching_cost", "mu"]
+    },
+    "var_delta_btw_study": {
+      "RT_normal": "mu",
+      "RT_normal_hyper": "mu",
+      "switching_cost": "switching_cost",
+      "switching_cost_hyper": "switching_cost"
+    },
+    "var_hyp_range_sddr": {
+      "RT_normal": [0, 20],
+      "RT_normal_hyper": [0, 20],
+      "switching_cost": [0, 20],
+      "switching_cost_hyper": [0, 20]
+    }
+  },
+  "accuracy":{
+    "figsizex": 4,
+    "figsizey": 8,
+    "xmin": -0.15,
+    "xmax": 0.3,
+    "rope_start": -0.05,
+    "rope_end": 0.05,
+    "var_specifics": {
+      "hierarbinom": ["beta", "sigma", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "hierar_binom_n_var": ["beta", "sigma", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "precision_normal_hyper": ["mu","sigma","mu_hyper", "sigma_hyper", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "precision_normal": ["mu", "sigma", "delta_zpdes", "delta_baseline", "delta_groups"]
+    },
+    "var_delta_btw_study": {
+      "hierarbinom": "beta",
+      "hierar_binom_n_var": "beta",
+      "precision_normal_hyper": "mu",
+      "precision_normal": "mu"
+    },
+    "var_hyp_range_sddr": {
+      "hierarbinom": [0, 0.05],
+      "hierar_binom_n_var": [0, 0.05],
+      "precision_normal_hyper": [0, 0.05],
+      "precision_normal": [0, 0.05]
+    }
+  },
+  "ufov_threshold": {
+    "figsizex": 2,
+    "figsizey": 3,
+    "xmin": -300,
+    "xmax": 300,
+    "rope_end": 17.5,
+    "rope_start": -17.5,
+    "var_specifics": {
+      "ufov_threshold_hyper": ["beta_hyper"],
+      "ufov_threshold": ["mu"]
+    },
+    "var_delta_btw_study": {
+      "ufov_threshold_hyper": "mu",
+      "ufov_threshold": "mu"
+    },
+    "var_hyp_range_sddr": {
+      "ufov_threshold_hyper": [0, 18],
+      "ufov_threshold": [0, 18]
+    }
+  }
+}

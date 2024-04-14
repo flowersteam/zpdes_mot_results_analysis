@@ -1,0 +1,14 @@
+{
+  "accuracy": {
+    "ufov": {
+      "conditions": ["final"],
+      "models": ["precision_normal"]
+    }
+  },
+  "ufov_threshold": {
+    "ufov": {
+      "conditions": ["final"],
+      "models": ["ufov_threshold"]
+    }
+  }
+}
