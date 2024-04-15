@@ -16,7 +16,7 @@ matplotlib.rc('xtick', labelsize=10)
 matplotlib.rc('ytick', labelsize=10)
 
 # Load the colors we chose to make all figures visually similar
-with open('config/visual_features_config.json', 'r') as file:
+with open('hierarchical_bayesian_models/config/visual_features_config.json', 'r') as file:
     data_colors = json.load(file)
 
 # Create global variables for the colors
