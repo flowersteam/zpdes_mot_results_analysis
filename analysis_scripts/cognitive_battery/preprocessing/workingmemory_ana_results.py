@@ -1,4 +1,4 @@
-from code.cognitive_battery.preprocessing.utils import *
+from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
 
 

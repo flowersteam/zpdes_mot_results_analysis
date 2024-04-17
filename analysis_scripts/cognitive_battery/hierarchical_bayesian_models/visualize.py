@@ -9,14 +9,14 @@ import json
 import scipy.stats as stats
 from matplotlib.patheffects import withStroke
 
-from code.cognitive_battery.hierarchical_bayesian_models.visualize_utils import retrieve_config, set_ax_deltas
-from code.cognitive_battery.hierarchical_bayesian_models.utils import get_SDDR, get_hdi_bounds, get_p_of_effect
+from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.visualize_utils import retrieve_config, set_ax_deltas
+from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.utils import get_SDDR, get_hdi_bounds, get_p_of_effect
 
 matplotlib.rc('xtick', labelsize=10)
 matplotlib.rc('ytick', labelsize=10)
 
 # Load the colors we chose to make all figures visually similar
-with open('hierarchical_bayesian_models/config/visual_features_config.json', 'r') as file:
+with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/visual_features_config.json', 'r') as file:
     data_colors = json.load(file)
 
 # Create global variables for the colors
@@ -34,8 +34,8 @@ def plot_traces_and_deltas(studies, config_fig, all_conditions, no_cdt_studies=[
     :return:
     '''
     for study in studies:
-        path_study = f"../outputs/{study}/cognitive_battery"
-        print(study, "\n \n \n \n ============================================================================")
+        path_study = f"outputs/{study}/cognitive_battery"
+        print(f"\n \n \n \n ===================={study}======================")
         for metric_type in all_conditions.keys():
             # Init few important variables:
             rope_start, rope_end, xmin, xmax, figsize, dpi, y_offset, step_offset = retrieve_config(config_fig,

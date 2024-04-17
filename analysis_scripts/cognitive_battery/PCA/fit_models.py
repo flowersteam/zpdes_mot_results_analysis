@@ -7,8 +7,8 @@ from sklearn.decomposition import PCA, FastICA
 import numpy as np
 import pickle
 
-from code.cognitive_battery.PCA.utils import get_df
-from code.cognitive_battery.PCA.visualize import get_all_PCA_figures, plot_diff_on_PC
+from analysis_scripts.cognitive_battery.PCA.utils import get_df
+from analysis_scripts.cognitive_battery.PCA.visualize import get_all_PCA_figures, plot_diff_on_PC
 
 
 def format_conditions(conditions):
@@ -163,7 +163,7 @@ def run_PCA(config, tasks, tasks_nb, kept_columns, models=['PCA'], study_diff='v
             df = df[df['task_status'] == time_condition_to_keep]
         # Let's create a folder to store our results
         # Results are put in the first study in list, to make sure there is no override we add all studies to name
-        path_to_store = f"../outputs/{studies[0]}/dimensionality_reduction/{studies}-{expe_name}"
+        path_to_store = f"outputs/{studies[0]}/dimensionality_reduction/{studies}-{expe_name}"
         for model_name in models:
             path = f"{path_to_store}/{model_name}/"
             Path(path).mkdir(parents=True, exist_ok=True)

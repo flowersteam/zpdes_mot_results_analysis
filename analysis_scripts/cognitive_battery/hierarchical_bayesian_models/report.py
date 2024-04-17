@@ -7,7 +7,7 @@ def get_latex_tables(studies, config_fig, all_conditions):
     '''
     This function returns a file with latex tables corresponding to various results
     '''
-    with open("config/main_preamble_reports.tex", 'r') as file:
+    with open("analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/main_preamble_reports.tex", 'r') as file:
         str = file.read()
     # str = "\documentclass{article} \n \\begin{document} \n"
     times = ["post", "pre"]
@@ -24,13 +24,13 @@ def get_latex_tables(studies, config_fig, all_conditions):
                     str += "\n \n"
                     print(f"{task}-{model}")
     str += "\n \end{document} "
-    text_file = open(f"../outputs/{studies}-tables_new.tex", "w")
+    text_file = open(f"outputs/{studies}-tables_new.tex", "w")
     _ = text_file.write(str)
     text_file.close()
-    with open(f"../outputs/{studies}-tables_new.tex") as f:
+    with open(f"outputs/{studies}-tables_new.tex") as f:
         pdf = build_pdf(f)
     # Save the resulting PDF to file
-    pdf.save_to(f"../outputs/{studies}-tables_new.pdf")
+    pdf.save_to(f"outputs/{studies}-tables_new.pdf")
 
 
 def generate_latex_table(studies, config_fig, all_conditions, time="pre", model="hierar_binom_n_var", task="moteval"):
@@ -49,7 +49,7 @@ def generate_latex_table(studies, config_fig, all_conditions, time="pre", model=
                 rope_start, rope_end = config_fig[metric_type]["rope_start"], config_fig[metric_type]["rope_end"]
                 for task_condition in all_conditions[metric_type][task]['conditions']:
                     nb_row_per_study = len(all_conditions[metric_type][task]['conditions']) * len(groups)
-                    path = f"../outputs/{study}/cognitive_battery/{task}"
+                    path = f"outputs/{study}/cognitive_battery/{task}"
                     trace = az.from_json(f"{path}/{task_condition}-{model}_inference_data.json")
                     var = config_fig[metric_type]["var_delta_btw_study"][model]
                     trace_var = trace.posterior[var]
@@ -125,7 +125,7 @@ def generate_latex_post_table(studies, config_fig, all_conditions, time="pre", m
                 rope_start, rope_end = config_fig[metric_type]["rope_start"], config_fig[metric_type]["rope_end"]
                 for task_condition in all_conditions[metric_type][task]['conditions']:
                     nb_row_per_study = len(all_conditions[metric_type][task]['conditions']) * len(groups)
-                    path = f"../outputs/{study}/cognitive_battery/{task}"
+                    path = f"outputs/{study}/cognitive_battery/{task}"
                     trace = az.from_json(f"{path}/{task_condition}-{model}_inference_data.json")
                     var = config_fig[metric_type]["var_delta_btw_study"][model]
                     trace_var = trace.posterior[var]

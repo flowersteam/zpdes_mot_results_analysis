@@ -1,4 +1,4 @@
-from code.cognitive_battery.preprocessing.utils import *
+from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
 
 
@@ -226,7 +226,7 @@ def treat_data(dataframe):
     dataframe["results_rt"] = dataframe.apply(
         lambda row: transform_string_to_row(row, "results_rt"), axis=1)
     dataframe.drop(dataframe[dataframe['results_rt'].str.len() == 0].index, inplace=True)
-    print(dataframe.info())
+    # print(dataframe.info())
     # results_ind_switch : remove first element of each row by null
     # 3 blocks - 99 responses (idx: 0 - 33 - 66 , beggining of each block should be set to null)
     # participant = dataframe[dataframe['task_status'] == "PRE_TEST"]

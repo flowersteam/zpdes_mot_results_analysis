@@ -6,7 +6,7 @@ import arviz
 import pandas as pd
 import pymc as pm
 
-from code.cognitive_battery.hierarchical_bayesian_models.build_models import build_model
+from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.build_models import build_model
 
 
 def get_traces(studies: list, all_conditions: dict, nb_samples: int = 4000, render_model_image: bool = False):
@@ -25,9 +25,9 @@ def get_traces(studies: list, all_conditions: dict, nb_samples: int = 4000, rend
     :return: None
     """
     for study in studies:
-        print("\n \n \n \n ==================================================", study)
+        print(f"\n ====================={study}===================== \n")
         main_path_data = f"data/{study}/cognitive_battery/"
-        main_path_outputs = f"../outputs/{study}/cognitive_battery/"
+        main_path_outputs = f"outputs/{study}/cognitive_battery/"
         for metric_type in all_conditions.keys():
             for task in all_conditions[metric_type].keys():
                 path_to_store = f"{main_path_outputs}/{task}"
@@ -36,12 +36,12 @@ def get_traces(studies: list, all_conditions: dict, nb_samples: int = 4000, rend
                 # Open the correct dataframe
                 if os.path.exists(f'{path_data}/{task}_lfa.csv'):
                     df = pd.read_csv(f'{path_data}/{task}_lfa.csv')
-                    print(task, "\n =============")
+                    print(f"=====================Start [{task}]=====================")
                     for task_condition in all_conditions[metric_type][task]['conditions']:
                         for model in all_conditions[metric_type][task]['models']:
                             print(
-                                f"\n \n \n \n =========================================================="
-                                f"\n{study}-{metric_type}-{task}-{task_condition}-{model}")
+                                f"=====================Condition / Model: "
+                                f"{study}-{metric_type}-{task}-{task_condition}-{model}=====================")
                             build_and_get_trace(df=df, task_condition=task_condition, model_type=model,
                                                 nb_samples=nb_samples,
                                                 path_to_store=f"{path_to_store}/{task_condition}",

@@ -1,4 +1,4 @@
-from code.cognitive_battery.preprocessing.utils import *
+from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
 
 
@@ -42,7 +42,7 @@ def compute_numbercond(row, ind_cond):
 def format_data(path):
     # FIRST TREAT THE CSV AND PARSE IT TO DF
     task = "enumeration"
-    # csv_path = f"../outputs/{study}/results_{study}/{task}/{task}.csv"
+    # csv_path = f"outputs/{study}/results_{study}/{task}/{task}.csv"
     df = pd.read_csv(f"{path}/{task}.csv", sep=",")
     conditions = ["5", "6", "7", "8", "9"]
     df['result_response_exact'] = df.apply(compute_result_exact_answers, axis=1)

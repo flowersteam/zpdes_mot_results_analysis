@@ -1,5 +1,5 @@
 from pathlib import Path
-from code.cognitive_battery.preprocessing.utils import *
+from analysis_scripts.cognitive_battery.preprocessing.utils import *
 import pandas as pd
 import numpy as np
 
@@ -26,7 +26,7 @@ def get_nb_trials(row):
 def format_data(path):
     # FIRST TREAT THE CSV AND PARSE IT TO DF
     task = "ufov"
-    # csv_path = f"../outputs/{study}/results_{study}/{task}/{task}.csv"
+    # csv_path = f"outputs/{study}/results_{study}/{task}/{task}.csv"
     try:
         df = pd.read_csv(f"{path}/{task}.csv", sep=",")
     except FileNotFoundError:

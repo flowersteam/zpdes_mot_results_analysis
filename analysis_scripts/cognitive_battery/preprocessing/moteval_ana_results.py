@@ -1,4 +1,4 @@
-from code.cognitive_battery.preprocessing.utils import *
+from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
 
 def is_one(result):
@@ -145,8 +145,8 @@ def save_for_jasp(df, cdts, path, study_name):
                                        "difficulty": cdt, "DV_pre": p_row_pre[cdt].values[0],
                                        "DV_post": p_row_post[cdt].values[0]}
     # # Concatenate the intra_training MOT evaluation:
-    # binary_intra = pd.read_csv(f'../outputs/v3_utl/results_v3_utl/v3_utl_binary_intra.csv')
-    # F1_intra = pd.read_csv(f'../outputs/v3_utl/results_v3_utl/v3_utl_F1_intra.csv')
+    # binary_intra = pd.read_csv(foutputs/v3_utl/results_v3_utl/v3_utl_binary_intra.csv')
+    # F1_intra = pd.read_csv(foutputs/v3_utl/results_v3_utl/v3_utl_F1_intra.csv')
     # new_df = new_df.merge(F1_intra, on=["participant_id", "condition"])
     # new_df = new_df.rename(columns={f"s_{i}": f"F1_s_{i}" for i in range(4)})
     # new_df = new_df.merge(binary_intra, on=["participant_id", "condition"])

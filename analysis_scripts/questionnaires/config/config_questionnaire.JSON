@@ -1,0 +1,35 @@
+{
+  "nasa_tlx": [
+    "Mental_demand",
+    "Physical_demand",
+    "Temporal_demand",
+    "Performance",
+    "Effort",
+    "Frustration",
+    "load_index"
+  ],
+  "ues": [
+    "FA",
+    "PU",
+    "AE",
+    "RW",
+    "engagement_score"
+  ],
+  "sims": [
+    "Intrinsic_motivation",
+    "Identified_regulation",
+    "External_regulation",
+    "Amotivation",
+    "SDI"
+  ],
+  "lp": [
+    "Difficulty_expectation",
+    "Easy_Feasible_Zone",
+    "Hard_Feasible_Zone"
+  ],
+  "tens": [
+    "Competence",
+    "Autonomy",
+    "Relatedness"
+  ]
+}

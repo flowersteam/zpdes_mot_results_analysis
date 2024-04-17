@@ -1,5 +1,5 @@
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5422529/
-from code.cognitive_battery.preprocessing.utils import *
+from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
 
 def transform_str_to_list(row, columns):
@@ -185,9 +185,9 @@ def format_data(path, save_lfa):
     blocks_list = [nb_go, nb_blocks - nb_go]
     NB_BLOCKS_TO_KEEP = min(blocks_list)
     is_go_blocks = blocks_list.index(NB_BLOCKS_TO_KEEP) == 0
-    print(f"ID {participant_id} has the smallest nb of blocks recorded ({nb_blocks}) with {nb_go} go blocks.")
-    print(f"Nb of blocks to keep: {NB_BLOCKS_TO_KEEP}")
-    print(f"Blocks to keep are go blocks: {is_go_blocks}")
+    # print(f"ID {participant_id} has the smallest nb of blocks recorded ({nb_blocks}) with {nb_go} go blocks.")
+    # print(f"Nb of blocks to keep: {NB_BLOCKS_TO_KEEP}")
+    # print(f"Blocks to keep are go blocks: {is_go_blocks}")
     df = df.apply(lambda row: delete_non_recorded_blocks(row, NB_BLOCKS_TO_KEEP), axis=1)
     df['nb_blocks'] = df.apply(compute_number_of_keyboard_input, axis=1)
     # Reaction times in or the number of correct go-trials (i.e., hits):

@@ -3,8 +3,8 @@ import pandas as pd
 from pingouin import ttest
 from pathlib import Path
 
-from code.cognitive_battery.PCA.utils import get_df
-from code.cognitive_battery.PCA.normalize import normalize_data
+from analysis_scripts.cognitive_battery.PCA.utils import get_df
+from analysis_scripts.cognitive_battery.PCA.normalize import normalize_data
 
 
 def run_broad_aggregate_difference(tasks, study, kept_columns, tasks_nb, expe_name, normalization_type="zscore"):
@@ -12,7 +12,7 @@ def run_broad_aggregate_difference(tasks, study, kept_columns, tasks_nb, expe_na
     # With all data:
     df = df[kept_columns + tasks + tasks_nb]
     df.sort_values(by=['participant_id', 'task_status'], inplace=True)
-    path_to_store = f"../outputs/{study}/aggregate_score/{expe_name}/"
+    path_to_store = f"outputs/{study}/aggregate_score/{expe_name}/"
     Path(path_to_store).mkdir(parents=True, exist_ok=True)
 
     # First for RT values, just take the inverse:
