@@ -28,8 +28,8 @@ Your setup is now complete!
 The project is organized into three primary directories:
 
 - analysis_scripts: This directory contains all scripts for performing the analysis.
--- cognitive_battery: Scripts for analyzing cognitive battery data.
--- questionnaires: Scripts for analyzing questionnaire data.
+  - cognitive_battery: Scripts for analyzing cognitive battery data.
+  - questionnaires: Scripts for analyzing questionnaire data.
 - data: This directory is for storing all data gathered during our experiments.
 - outputs: This directory is for saving all analysis outputs.
 
