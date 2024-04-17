@@ -1,5 +1,5 @@
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5422529/
-from .utils import *
+from code.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
 
 def transform_str_to_list(row, columns):
@@ -216,7 +216,7 @@ def format_data(path, save_lfa):
 
 def preprocess_and_save(study):
     task = "gonogo"
-    savedir = f"../data/{study}/cognitive_battery"
+    savedir = f"data/{study}/cognitive_battery"
     path = f"{savedir}/{task}"
     Path(savedir).mkdir(parents=True, exist_ok=True)
     format_data(path, save_lfa=True)

@@ -6,7 +6,7 @@ import arviz
 import pandas as pd
 import pymc as pm
 
-from .build_models import build_model
+from code.cognitive_battery.hierarchical_bayesian_models.build_models import build_model
 
 
 def get_traces(studies: list, all_conditions: dict, nb_samples: int = 4000, render_model_image: bool = False):
@@ -26,7 +26,7 @@ def get_traces(studies: list, all_conditions: dict, nb_samples: int = 4000, rend
     """
     for study in studies:
         print("\n \n \n \n ==================================================", study)
-        main_path_data = f"../data/{study}/cognitive_battery/"
+        main_path_data = f"data/{study}/cognitive_battery/"
         main_path_outputs = f"../outputs/{study}/cognitive_battery/"
         for metric_type in all_conditions.keys():
             for task in all_conditions[metric_type].keys():

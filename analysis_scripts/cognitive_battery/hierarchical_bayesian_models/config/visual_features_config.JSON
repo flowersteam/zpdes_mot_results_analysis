@@ -5,5 +5,7 @@
   "COLOR_BASELINE_v3_utl": "#9CC19F",
   "COLOR_ZPDES_pilot": "#114B5B",
   "COLOR_BASELINE_pilot": "#9CC19F",
-  "COLOR_ctrl": "#487BA7"
+  "COLOR_ctrl": "#487BA7",
+  "COLOR_ZPDES": "#114B5B",
+  "COLOR_BASELINE": "#9CC19F"
 }

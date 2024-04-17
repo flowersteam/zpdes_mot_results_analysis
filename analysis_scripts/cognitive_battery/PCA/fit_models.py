@@ -7,8 +7,8 @@ from sklearn.decomposition import PCA, FastICA
 import numpy as np
 import pickle
 
-from .utils import get_df
-from .visualize import get_all_PCA_figures, plot_diff_on_PC
+from code.cognitive_battery.PCA.utils import get_df
+from code.cognitive_battery.PCA.visualize import get_all_PCA_figures, plot_diff_on_PC
 
 
 def format_conditions(conditions):

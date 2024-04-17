@@ -2,6 +2,7 @@ import pymc as pm
 from ast import literal_eval
 import pandas as pd
 
+
 def build_model(type, data, task_condition=None, coords=None):
     models = {"hierarbinom": build_hierar_binom,
               "hierar_binom_n_var": build_hierar_binom_n_var,
@@ -15,6 +16,7 @@ def build_model(type, data, task_condition=None, coords=None):
               "precision_normal": build_precision_normal
               }
     return models[type](data, task_condition, coords)
+
 
 def build_precision_moteval_hyper(data_combined, task_condition, coords):
     with pm.Model(coords=coords) as precision_model:

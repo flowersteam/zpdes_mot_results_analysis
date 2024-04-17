@@ -1,5 +1,5 @@
 from .extract_sorted_memory import Results_memory
-from .utils import *
+from code.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
 
 
@@ -127,7 +127,7 @@ def format_data(path):
 
 def preprocess_and_save(study):
     task = "memorability"
-    savedir = f"../data/{study}/cognitive_battery"
+    savedir = f"data/{study}/cognitive_battery"
     path = f"{savedir}/{task}"
     Path(savedir).mkdir(parents=True, exist_ok=True)
     format_data(path)

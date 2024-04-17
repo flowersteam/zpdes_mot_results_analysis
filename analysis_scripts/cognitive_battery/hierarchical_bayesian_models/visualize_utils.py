@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+
+
 def retrieve_config(config_fig, metric_type):
     rope_start, rope_end = config_fig[metric_type]["rope_start"], config_fig[metric_type]["rope_end"]
     xmin, xmax = config_fig[metric_type]["xmin"], config_fig[metric_type]["xmax"]

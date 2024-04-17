@@ -3,8 +3,8 @@ import pandas as pd
 from pingouin import ttest
 from pathlib import Path
 
-from PCA.utils import get_df
-from PCA.normalize import normalize_data
+from code.cognitive_battery.PCA.utils import get_df
+from code.cognitive_battery.PCA.normalize import normalize_data
 
 
 def run_broad_aggregate_difference(tasks, study, kept_columns, tasks_nb, expe_name, normalization_type="zscore"):

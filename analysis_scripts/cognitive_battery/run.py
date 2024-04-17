@@ -1,17 +1,16 @@
 import json
-import time
 
-from preprocessing.preprocessing import pre_process_all
+from code.cognitive_battery.preprocessing.preprocessing import pre_process_all
 
-from hierarchical_bayesian_models.fit_models import get_traces
-from hierarchical_bayesian_models.visualize import plot_traces_and_deltas
-from hierarchical_bayesian_models.report import get_latex_tables
+from code.cognitive_battery.hierarchical_bayesian_models.fit_models import get_traces
+from code.cognitive_battery.hierarchical_bayesian_models.visualize import plot_traces_and_deltas
+from code.cognitive_battery.hierarchical_bayesian_models.report import get_latex_tables
 
-from utils import Chrono
+from code.utils import Chrono
 
-from PCA.fit_models import run_PCA, format_conditions
+from code.cognitive_battery.PCA.fit_models import run_PCA, format_conditions
 
-from aggregate_score.compute_aggregate import run_broad_aggregate_difference
+from code.cognitive_battery.aggregate_score.compute_aggregate import run_broad_aggregate_difference
 
 # Define on what studies you want to conduct analysis
 studies = ["v3_prolific"]

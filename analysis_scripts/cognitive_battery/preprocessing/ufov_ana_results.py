@@ -1,5 +1,5 @@
 from pathlib import Path
-from .utils import *
+from code.cognitive_battery.preprocessing.utils import *
 import pandas as pd
 import numpy as np
 
@@ -45,7 +45,7 @@ def format_data(path):
 
 def preprocess_and_save(study):
     task = "ufov"
-    savedir = f"../data/{study}/cognitive_battery"
+    savedir = f"data/{study}/cognitive_battery"
     path = f"{savedir}/{task}"
     Path(savedir).mkdir(parents=True, exist_ok=True)
     format_data(path)

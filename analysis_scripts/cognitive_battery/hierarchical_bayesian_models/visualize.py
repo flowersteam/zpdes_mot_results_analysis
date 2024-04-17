@@ -9,8 +9,8 @@ import json
 import scipy.stats as stats
 from matplotlib.patheffects import withStroke
 
-from .visualize_utils import retrieve_config, set_ax_deltas
-from .utils import get_SDDR, get_hdi_bounds, get_p_of_effect
+from code.cognitive_battery.hierarchical_bayesian_models.visualize_utils import retrieve_config, set_ax_deltas
+from code.cognitive_battery.hierarchical_bayesian_models.utils import get_SDDR, get_hdi_bounds, get_p_of_effect
 
 matplotlib.rc('xtick', labelsize=10)
 matplotlib.rc('ytick', labelsize=10)
