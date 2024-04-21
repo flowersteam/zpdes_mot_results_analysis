@@ -7,9 +7,11 @@ import pandas as pd
 import pymc as pm
 
 from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.build_models import build_model
+from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.visualize import render_model_graph
 
 
-def get_traces(studies: list, all_conditions: dict, nb_samples: int = 4000, render_model_image: bool = False):
+def get_traces(studies: list, all_conditions: dict, nb_samples: int = 4000, render_model_image: bool = False,
+               get_trace: bool = True):
     """
     Iterates over all given studies and task conditions to estimate the posterior by calling the 'build_and_get_trace' function.
 
@@ -22,6 +24,7 @@ def get_traces(studies: list, all_conditions: dict, nb_samples: int = 4000, rend
                                 with task details and conditions.
     :param int nb_samples: The number of samples to draw in the trace. Default is 4000.
     :param bool render_model_image: A flag to indicate whether to render the model image. Default is False.
+    :param bool get_trace: A flag to indicate whether to get traces, it can be set to false when only saving model graphs
     :return: None
     """
     for study in studies:
@@ -45,11 +48,12 @@ def get_traces(studies: list, all_conditions: dict, nb_samples: int = 4000, rend
                             build_and_get_trace(df=df, task_condition=task_condition, model_type=model,
                                                 nb_samples=nb_samples,
                                                 path_to_store=f"{path_to_store}/{task_condition}",
-                                                graphviz=render_model_image)
+                                                graphviz=render_model_image,
+                                                get_trace=get_trace)
 
 
 def build_and_get_trace(df: pd.DataFrame, task_condition: dict, model_type: str, nb_samples: int, path_to_store: str,
-                        graphviz: bool = False) -> arviz.InferenceData:
+                        graphviz: bool = False, get_trace: bool = True) -> arviz.InferenceData:
     """
     Preprocess the data, build a probabilistic model, and return the trace as InferenceData.
 
@@ -59,6 +63,7 @@ def build_and_get_trace(df: pd.DataFrame, task_condition: dict, model_type: str,
     :param int nb_samples: The number of samples to draw from the posterior.
     :param str path_to_store: The file path to store the InferenceData JSON.
     :param bool graphviz: (optional) If true, generates and saves a Graphviz diagram of the model.
+    :param bool get_trace: (optional) If False, don't get trace
     :return: An arviz.InferenceData object containing the model trace.
     :rtype: arviz.InferenceData
     """
@@ -66,13 +71,12 @@ def build_and_get_trace(df: pd.DataFrame, task_condition: dict, model_type: str,
     data_combined, coords, deltas, data_pre, data_post = reformat_data(df, task_condition)
     model = build_model(model_type, data_combined, task_condition=task_condition, coords=coords)
     if graphviz:
-        gv = pm.model_to_graphviz(model)
-        gv.format = 'png'
-        gv.render(filename=f"{model_type}-graphviz")
-    with model:
-        trace = pm.sample(nb_samples, idata_kwargs={'log_likelihood': True})
-    trace.to_json(f"{path_to_store}-{model_type}_inference_data.json")
-    return trace
+        render_model_graph(model, path_to_store, name=model_type)
+    if get_trace:
+        with model:
+            trace = pm.sample(nb_samples, idata_kwargs={'log_likelihood': True})
+        trace.to_json(f"{path_to_store}-{model_type}_inference_data.json")
+        return trace
 
 
 def reformat_data(df: pd.DataFrame, task_condition: dict) -> (pd.DataFrame, dict, list, pd.DataFrame, pd.DataFrame):

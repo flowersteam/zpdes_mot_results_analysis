@@ -8,15 +8,19 @@ import math
 import json
 import scipy.stats as stats
 from matplotlib.patheffects import withStroke
+import pymc as pm
 
-from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.visualize_utils import retrieve_config, set_ax_deltas
-from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.utils import get_SDDR, get_hdi_bounds, get_p_of_effect
+from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.visualize_utils import retrieve_config, \
+    set_ax_deltas
+from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.utils import get_SDDR, get_hdi_bounds, \
+    get_p_of_effect
 
 matplotlib.rc('xtick', labelsize=10)
 matplotlib.rc('ytick', labelsize=10)
 
 # Load the colors we chose to make all figures visually similar
-with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/visual_features_config.json', 'r') as file:
+with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/visual_features_config.json',
+          'r') as file:
     data_colors = json.load(file)
 
 # Create global variables for the colors
@@ -219,3 +223,11 @@ def plot_barh(hdi, proba, sddr, ax, color_bar, height=0.3, label="delta_zpdes", 
             fontweight='bold',
             bbox=dict(facecolor='white', edgecolor='none', pad=1))
     return ax
+
+
+def render_model_graph(model, path_to_store, name):
+    path_to_store = ''+'/'.join(filter(bool, path_to_store.split('/')[:-1])) + '/models/'
+    Path(path_to_store).mkdir(parents=True, exist_ok=True)
+    gv = pm.model_to_graphviz(model)
+    gv.format = 'png'
+    gv.render(filename=f"{path_to_store}/{name}-graphviz")

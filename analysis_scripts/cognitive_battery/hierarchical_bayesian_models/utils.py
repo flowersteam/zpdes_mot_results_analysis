@@ -5,7 +5,7 @@ import arviz as az
 
 def get_SDDR(trace, var, parameter_priors={}):
     # First check if trace is already of type
-    try :
+    try:
         flat_samples = trace.posterior[var].values[:, 1000:].flatten()
     except AttributeError:
         flat_samples = trace.values[:, 1000:].flatten()
