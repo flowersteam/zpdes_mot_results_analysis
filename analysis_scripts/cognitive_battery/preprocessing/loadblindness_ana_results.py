@@ -1,5 +1,6 @@
 from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
+from analysis_scripts.cognitive_battery.preprocessing.utils import detect_outliers_and_clean
 
 
 def compute_nearfarcond(row, ind_nearfar):
@@ -67,6 +68,12 @@ def format_data(path):
     condition_accuracy_names = [f"{elt}-accuracy" for elt in conditions_names]
     condition_correct_names = [f"{elt}-correct" for elt in conditions_names]
     condition_nb_names = [f"{elt}-nb" for elt in conditions_names]
+    nb_participants_init = len(dataframe['participant_id'].unique())
+    # for condition in condition_accuracy_names:
+    #     dataframe = detect_outliers_and_clean(dataframe, condition)
+    dataframe = detect_outliers_and_clean(dataframe, 'total-task-accuracy')
+    print(f"Loadblindness, proportion removed: {len(dataframe['participant_id'].unique())} / {nb_participants_init} ")
+
     dataframe[base + condition_accuracy_names + condition_correct_names + condition_nb_names].to_csv(
         f'{path}/loadblindness_lfa.csv',
         index=False)

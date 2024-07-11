@@ -1,6 +1,6 @@
 from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
-
+from analysis_scripts.cognitive_battery.preprocessing.utils import detect_outliers_and_clean
 
 # Treat data:
 def compute_result_exact_answers(row):
@@ -71,6 +71,11 @@ def format_data(path):
     df['total-task-correct'] = convert_to_global_task(df, [f'{cdt}-correct' for cdt in conditions])
     df['total-task-nb'] = 20 * len(conditions)
     df['total-task-accuracy'] = df['total-task-correct'] / df['total-task-nb']
+    nb_participants_init = len(df['participant_id'].unique())
+    # for condition in condition_accuracy:
+    #     df = detect_outliers_and_clean(df, condition)
+    df = detect_outliers_and_clean(df, 'total-task-accuracy')
+    print(f"Enumeration, proportion removed: {len(df['participant_id'].unique())} / {nb_participants_init} ")
     df = df[base + condition_correct + condition_accuracy + condition_nb]
     df = delete_uncomplete_participants(df)
     df.to_csv(f"{path}/{task}_lfa.csv", index=False)

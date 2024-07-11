@@ -2,6 +2,7 @@ from pathlib import Path
 from analysis_scripts.cognitive_battery.preprocessing.utils import *
 import pandas as pd
 import numpy as np
+from analysis_scripts.cognitive_battery.preprocessing.utils import detect_outliers_and_clean
 
 
 def transform_to_list(row):
@@ -40,6 +41,11 @@ def format_data(path):
     condition_accuracy = ["final-accuracy_continuous", "final_step", "nb_trials", "final-threshold", "final-rt"]
     df = df[base + condition_accuracy]
     df = delete_uncomplete_participants(df)
+    nb_participants_init = len(df['participant_id'].unique())
+    # for condition in condition_accuracy:
+    #     df = detect_outliers_and_clean(df, condition)
+    df = detect_outliers_and_clean(df, 'final-threshold')
+    print(f"Ufov, proportion removed: {len(df['participant_id'].unique())} / {nb_participants_init}")
     df.to_csv(f"{path}/{task}_lfa.csv", index=False)
 
 

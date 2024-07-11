@@ -1,5 +1,6 @@
 from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
+from analysis_scripts.cognitive_battery.preprocessing.utils import detect_outliers_and_clean
 
 
 def delete_uncomplete_participants(dataframe):
@@ -65,6 +66,11 @@ def format_data(path):
     condition_nb_names = [f"{elt}-nb" for elt in number_condition] + ['total-task-nb']
     base = ['participant_id', 'task_status', 'condition']
     dataframe = dataframe[base + condition_accuracy_names + condition_correct_names + condition_nb_names]
+    nb_participants_init = len(dataframe['participant_id'].unique())
+    # for condition in condition_accuracy_names:
+    #     dataframe = detect_outliers_and_clean(dataframe, condition)
+    dataframe = detect_outliers_and_clean(dataframe, "total-task-accuracy")
+    print(f"Workingmemory, proportion removed: {len(dataframe['participant_id'].unique())} / {nb_participants_init}")
     # If save_mode, store the dataframe into csv:
     dataframe.to_csv(f'{path}/workingmemory_lfa.csv', index=False)
 

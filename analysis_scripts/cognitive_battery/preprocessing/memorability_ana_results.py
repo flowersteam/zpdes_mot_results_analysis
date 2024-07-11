@@ -1,6 +1,7 @@
 from .extract_sorted_memory import Results_memory
 from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
+from analysis_scripts.cognitive_battery.preprocessing.utils import detect_outliers_and_clean
 
 
 # Treat data:
@@ -115,6 +116,11 @@ def format_data(path):
     all_conditions += [f"{cdt}-nb" for cdt in real_conditions]
     all_conditions += [f"{cdt}-rt" for cdt in tmp_conditions]
     dataframe = dataframe[base + all_conditions]
+    nb_participants_init = len(dataframe['participant_id'].unique())
+    # for condition in [f"{cdt}-accuracy" for cdt in real_conditions]:
+    #     dataframe = detect_outliers_and_clean(dataframe, condition)
+    # for condition in [f"{cdt}-rt" for cdt in tmp_conditions]:
+    #     dataframe = detect_outliers_and_clean(dataframe, condition)
     dataframe['total-task-hit-correct'] = convert_to_global_task(dataframe, [f'{cdt}-hit-correct' for cdt in tmp_conditions])
     dataframe['total-task-fa-correct'] = convert_to_global_task(dataframe, [f'{cdt}-fa-correct' for cdt in tmp_conditions])
     dataframe['total-task-nb'] = 20 * len(tmp_conditions)
@@ -122,6 +128,8 @@ def format_data(path):
     dataframe['total-task-hit-accuracy'] = dataframe['total-task-hit-correct'] / dataframe['total-task-nb']
     dataframe['total-task-fa-accuracy'] = dataframe['total-task-fa-correct'] / dataframe['total-task-nb']
     dataframe['total-task-hit-rt'] = dataframe[[col for col in dataframe.columns if '-rt' in col]].mean(axis=1)
+    dataframe = detect_outliers_and_clean(dataframe, 'total-task-hit-accuracy')
+    print(f"Memorability, proportion removed: {len(dataframe['participant_id'].unique())} / {nb_participants_init} ")
     dataframe.to_csv(f'{path}/memorability_lfa.csv', index=False)
 
 

@@ -1,6 +1,6 @@
 from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
-
+from analysis_scripts.cognitive_battery.preprocessing.utils import detect_outliers_and_clean
 
 # keyRes1 = F => 1 (ODD impair - LOW)
 # keyRes2 = J => 2 (EVEN pair - HIGH)
@@ -331,6 +331,13 @@ def format_data(path):
     dataframe = dataframe[base + condition_names_correct + condition_names_rt + column_nb_to_keep]
     for cdt in conditions:
         dataframe[f"{cdt}-accuracy"] = dataframe[f"{cdt}-correct"] / dataframe[f"{cdt}-nb"]
+    nb_participants_init = len(dataframe['participant_id'].unique())
+    # for condition in condition_names_rt:
+    #     dataframe = detect_outliers_and_clean(dataframe, condition)
+    # for condition in [f"{cdt}-accuracy" for cdt in conditions]:
+    #     dataframe = detect_outliers_and_clean(dataframe, condition)
+    dataframe = detect_outliers_and_clean(dataframe, 'total-task-accuracy')
+    print(f"Taskswitch, proportion removed: {len(dataframe['participant_id'].unique())} / {nb_participants_init} ")
     dataframe.to_csv(f"{path}/taskswitch_lfa.csv", index=False)
     return dataframe
 

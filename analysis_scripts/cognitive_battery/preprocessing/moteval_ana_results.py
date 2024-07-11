@@ -1,5 +1,6 @@
 from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
+from analysis_scripts.cognitive_battery.preprocessing.utils import detect_outliers_and_clean
 
 def is_one(result):
     """From a scalar accuracy (between 0 and 1), returns 1 if result is 1 and 0 otherwise"""
@@ -119,6 +120,12 @@ def format_data(path, save_lfa=False):
                                                            [f"{cdt}-speed-correct" for cdt in conditions_speed]])
     df['total-task-accuracy'] = df['total-task-correct'] / nb_trials
     df['total-task-nb'] = nb_trials
+    outcomes_names_acc.append('total-task-accuracy')
+    nb_participants_init = len(df['participant_id'].unique())
+    # for condition in outcomes_names_acc:
+    #     df = detect_outliers_and_clean(df, condition)
+    df = detect_outliers_and_clean(df, 'total-task-accuracy')
+    print(f"Moteval, proportion removed: {len(df['participant_id'].unique())} / {nb_participants_init} ")
     df.to_csv(f'{path}/moteval_lfa.csv', index=False)
     # For other formats (analysis in JASP):
     cdts_JASP = [f"{cdt_s}-speed-{cdt_t}-nb-target-accuracy" for cdt_t in

@@ -93,3 +93,55 @@ def change_accuracy_for_correct_column(column_name: str):
 
 def convert_to_global_task(task, conditions):
     return task[conditions].sum(axis=1)
+
+
+def detect_outliers_and_clean(df, condition):
+    def detect_outliers_iqr(series):
+        Q1 = series.quantile(0.25)
+        Q3 = series.quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 2 * IQR
+        upper_bound = Q3 + 2 * IQR
+        return series[(series < lower_bound) | (series > upper_bound)]
+
+    # Detect outliers in pre-test
+    pre = df[df['task_status'] == 'PRE_TEST']
+    pre_outliers = detect_outliers_iqr(pre[condition])
+    pre_outlier_ids = pre[pre[condition].isin(pre_outliers)].participant_id.unique()
+
+    if len(pre_outlier_ids) > 0:
+        print(f"{condition}: Outliers to remove because of pre-test: {pre_outlier_ids}")
+
+    # Exclude pre-test outliers
+    df_cleaned = df[~df['participant_id'].isin(pre_outlier_ids)]
+
+    # Detect outliers in post-test
+    post = df[df['task_status'] == 'POST_TEST']
+    post_outliers = detect_outliers_iqr(post[condition])
+    post_outliers_ids = post[post[condition].isin(post_outliers)].participant_id.unique()
+
+    if len(post_outliers_ids) > 0:
+        print(f"{condition}: Outliers to remove because of post-test: {post_outliers_ids}")
+
+    # Exclude pre-test outliers
+    df_cleaned = df[~df['participant_id'].isin(post_outliers_ids)]
+
+    # Calculate change and detect outliers in change
+    pre_cleaned = df_cleaned[df_cleaned['task_status'] == 'PRE_TEST']
+    post_cleaned = df_cleaned[df_cleaned['task_status'] == 'POST_TEST']
+    df_cleaned.loc[df_cleaned['task_status'] == 'POST_TEST', 'change'] = post_cleaned[condition].values - pre_cleaned[
+        condition].values
+
+    change_outliers = detect_outliers_iqr(df_cleaned[df_cleaned['task_status'] == 'POST_TEST']['change'])
+    change_outlier_ids = df_cleaned[df_cleaned['change'].isin(change_outliers)].participant_id.unique()
+
+    # Exclude change outliers
+    df_cleaned = df_cleaned[~df_cleaned['participant_id'].isin(change_outlier_ids)]
+
+    if len(change_outlier_ids) > 0:
+        print(f"{condition}: Outliers to remove because of change: {change_outlier_ids}")
+
+    # Drop the change column if not needed
+    df_cleaned.drop(columns=['change'], inplace=True, errors='ignore')
+
+    return df_cleaned

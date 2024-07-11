@@ -1,6 +1,7 @@
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5422529/
 from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
+from analysis_scripts.cognitive_battery.preprocessing.utils import detect_outliers_and_clean
 
 def transform_str_to_list(row, columns):
     for column in columns:
@@ -209,6 +210,15 @@ def format_data(path, save_lfa):
     df['total-task-correct'] = df['GO-correct'] + (NB_BLOCKS_TO_KEEP - df['NOGO-correct'])
     df['total-task-nb'] = NB_BLOCKS_TO_KEEP * 2
     df['total-task-accuracy'] = df['total-task-correct'] / df['total-task-nb']
+    nb_participants_init = len(df['participant_id'].unique())
+    # for condition in conditions_accuracy:
+    #     df = detect_outliers_and_clean(df, condition)
+    # for condition in conditions_RT:
+    #     df = detect_outliers_and_clean(df, condition)
+    df = detect_outliers_and_clean(df, 'total-task-accuracy')
+    df = detect_outliers_and_clean(df, 'GO-rt')
+    print(f"Gonogo, proportion removed: {len(df['participant_id'].unique())} / {nb_participants_init} ")
+
     df = df[base + conditions_accuracy + conditions_RT + conditions_nb + conditions_correct]
     if save_lfa:
         df.to_csv(f"{path}/gonogo_lfa.csv", index=False)
