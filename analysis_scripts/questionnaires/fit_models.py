@@ -95,9 +95,9 @@ def get_bayesian_mixed_lm_model(data, condition, path_to_store, range_max=20, ):
             posterior_density_at_zero = kde(0)  # Evaluate the density at zero
             prior_density_at_zero = stats.norm.pdf(0, loc=parameter_priors[varname]['mu'],
                                                    scale=parameter_priors[varname]['sigma'])
-            sddr = posterior_density_at_zero / prior_density_at_zero
+            sddr = prior_density_at_zero / posterior_density_at_zero
             summary_df.loc[varname, 'SDDR'] = sddr
-    summary_str += str(summary_df)
+    summary_str += summary_df.to_string()
     return summary_str
 
 

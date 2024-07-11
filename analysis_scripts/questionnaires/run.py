@@ -112,10 +112,10 @@ def run_questionnaires_analysis(studies):
     print("=====================Start [Questionnaires] - full analysis=====================")
     for study in studies:
         # First preprocess the questionnaire data
-        preprocess_all(study)
+        # preprocess_all(study)
         # Then get some descriptive visu
         print(f"====================Get descriptive figures====================")
-        run_all_descriptive_visualizations(study)
+        # run_all_descriptive_visualizations(study)
         # Finally fit models
         print(f"====================Start Mixed effects models====================")
         run_mixed_effect_models(study)
