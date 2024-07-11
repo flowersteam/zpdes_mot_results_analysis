@@ -105,8 +105,8 @@ def plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig,
                 # Open trace
                 trace = az.from_json(f"{path}/{task_condition}-{model}_inference_data.json")
                 # First plot the trace:
-                plot_trace(trace, var_names, path_to_store=f"{path_to_store}/{task_condition}-{model}",
-                           model_type=model, task=task, condition=task_condition)
+                # plot_trace(trace, var_names, path_to_store=f"{path_to_store}/{task_condition}-{model}",
+                #            model_type=model, task=task, condition=task_condition)
                 # Second plot the deltas:
                 ax, y_offset, labels, yticks = plot_deltas(trace, ax_deltas=ax,
                                                            task_condition=task_condition,
@@ -117,7 +117,8 @@ def plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig,
                                                            model=model,
                                                            no_condition=is_a_control_study, study=study,
                                                            sddr_mu=sddr_mu, sddr_sigma=sddr_sigma,
-                                                           xmax=xmax)
+                                                           xmax=xmax, add_pre=True, config_fig=config_fig,
+                                                           metric_type=metric_type)
             # Add margin between task condition:
             y_offset += step_offset
         # Add lines to separate between tasks
@@ -183,7 +184,8 @@ def plot_trace(trace, var_names, path_to_store, model_type="hierarbinom", task="
 
 def plot_deltas(trace, ax_deltas=None, task_condition="5-nb-targets", task="moteval", y_offset=0,
                 step_offset=0.2, labels=[], rope_start=-0.05, rope_end=0.05, yticks=[], model="hierarbinom",
-                no_condition=False, study="v3_prolific", sddr_mu=0, sddr_sigma=0.05, xmax=0.3):
+                no_condition=False, study="v3_prolific", sddr_mu=0, sddr_sigma=0.05, xmax=0.3, add_pre=True,
+                config_fig=None, metric_type=None):
     # plt.figure(figsize=figsize)
     # plot_distribution_of_deltas(deltas, data_pre)
     vars = ["delta_zpdes", "delta_baseline"]
@@ -200,13 +202,41 @@ def plot_deltas(trace, ax_deltas=None, task_condition="5-nb-targets", task="mote
         labels += ["", f"{task}_{task_condition} \n {model}", ""]
     else:
         labels += ["", f"{task}_{task_condition}", ""]
-    yticks += [y_offset, y_offset + step_offset / 2, y_offset + step_offset]
+    if add_pre:
+        p, sddr, hdi = get_pre_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma)
+        probas.append(p)
+        sddrs.append(sddr)
+        hdis.append(hdi)
+        color_bars.append("white")
+        color_txt.append("white")
+        condition.append("diff_pre")
+        labels.append("")
+        yticks += [y_offset, y_offset + step_offset / 2, y_offset + step_offset, y_offset + (2 * step_offset)]
+    else:
+        yticks += [y_offset, y_offset + step_offset / 2, y_offset + step_offset]
     for delta, p, sddr, c_b, c_t, c_l in zip(hdis, probas, sddrs, color_bars, color_txt, condition):
         ax_deltas = plot_barh(delta, p, sddr, ax_deltas, height=0.5, color_bar=c_b, color_txt=c_t,
                               label=f"{task}_{task_condition}",
                               y_offset=y_offset, xmax=xmax)
         y_offset += step_offset
     return ax_deltas, y_offset, labels, yticks
+
+
+def get_pre_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma):
+    var = config_fig[metric_type]["var_delta_btw_study"][model]
+    trace_var = trace.posterior[var]
+    trace_diff = trace_var[:, :, 1, 0] - trace_var[:, :, 0, 0]
+    vals = trace_diff.values.flatten()
+    # returns the hdi
+    hdi = az.hdi(vals, hdi_prob=0.94)
+    proba_positive_effect = np.mean((trace_diff > 0))
+    proba = np.max([proba_positive_effect, 1 - proba_positive_effect])
+    flat_samples = trace_diff.values[:, 1000:].flatten()
+    kde = stats.gaussian_kde(flat_samples)
+    posterior_density_at_zero = kde(0)  # Evaluate the density at zero
+    prior_density_at_zero = stats.norm.pdf(0, loc=sddr_mu, scale=sddr_sigma)
+    sddr = posterior_density_at_zero / prior_density_at_zero
+    return proba, sddr[0], hdi
 
 
 def plot_barh(hdi, proba, sddr, ax, color_bar, height=0.3, label="delta_zpdes", color_txt='black', y_offset=0,
@@ -226,7 +256,7 @@ def plot_barh(hdi, proba, sddr, ax, color_bar, height=0.3, label="delta_zpdes", 
 
 
 def render_model_graph(model, path_to_store, name):
-    path_to_store = ''+'/'.join(filter(bool, path_to_store.split('/')[:-1])) + '/models/'
+    path_to_store = '' + '/'.join(filter(bool, path_to_store.split('/')[:-1])) + '/models/'
     Path(path_to_store).mkdir(parents=True, exist_ok=True)
     gv = pm.model_to_graphviz(model)
     gv.format = 'png'

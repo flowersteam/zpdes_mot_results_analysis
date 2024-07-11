@@ -1,42 +1,44 @@
 {
   "accuracy": {
-    "ufov": {
-      "conditions": ["final"],
-      "models": ["precision_normal", "precision_normal_hyper"]
-    },
     "moteval": {
       "conditions": [
         "1-speed", "4-speed", "8-speed"
       ],
       "models": [
+        "hierar_binom_covar_pre",
+        "hierar_binom_n_gain",
         "precision_normal",
         "precision_normal_hyper",
         "hierar_binom_n_var"
       ]
     },
+    "ufov": {
+      "conditions": ["final"],
+      "models": ["precision_normal", "precision_normal_hyper"]
+    },
     "taskswitch": {
       "conditions": ["relative", "parity"],
-      "models": ["hierar_binom_n_var"]
+      "models": ["hierar_binom_n_gain", "hierar_binom_n_var"]
     },
     "memorability": {
       "conditions": ["2-fa", "3-fa", "4-fa", "5-fa", "100-fa", "2-hit", "3-hit", "4-hit", "5-hit", "100-hit"],
-      "models": ["hierar_binom_n_var"]
+      "models": ["hierar_binom_n_gain", "hierar_binom_n_var"]
     },
     "workingmemory": {
       "conditions": ["4", "5", "6", "7", "8"],
-      "models": ["hierar_binom_n_var"]
+      "models": ["hierar_binom_n_gain", "hierar_binom_n_var"]
     },
     "loadblindness": {
-      "models": ["hierar_binom_n_var"],
+      "models": ["hierar_binom_n_gain", "hierar_binom_n_var"],
       "conditions": ["near", "far"]
     },
     "gonogo": {
-      "models": ["hierar_binom_n_var"],
+      "models": ["hierar_binom_n_gain", "hierar_binom_n_var"],
       "conditions": ["GO", "FA"]
     },
     "enumeration": {
       "conditions": ["5","6","7","8","9"],
-      "models": ["hierar_binom_n_var"]
+      "models": ["hierar_binom_n_gain", "hierar_binom_n_var"]
     }
   },
   "RT": {

@@ -6,6 +6,8 @@ import pandas as pd
 def build_model(type, data, task_condition=None, coords=None):
     models = {"hierarbinom": build_hierar_binom,
               "hierar_binom_n_var": build_hierar_binom_n_var,
+              "hierar_binom_gain": build_hierar_binom_gain,
+              "hierar_binom_n_gain": build_hierar_binom_n_gain,
               "RT_normal": build_RT_normal,
               "RT_normal_hyper": build_RT_normal_hyper,
               "ufov_threshold": build_ufov_threshold,
@@ -13,7 +15,8 @@ def build_model(type, data, task_condition=None, coords=None):
               "switching_cost_hyper": build_switching_cost_RT_hyper,
               "switching_cost": build_switching_cost_RT,
               "precision_normal_hyper": build_precision_moteval_hyper,
-              "precision_normal": build_precision_normal
+              "precision_normal": build_precision_normal,
+              "hierar_binom_covar_pre": build_hierar_binom_covar_pre,
               }
     return models[type](data, task_condition, coords)
 
@@ -100,6 +103,34 @@ def build_hierar_binom(data_combined, task_condition, coords):
     return hierarchical_model
 
 
+def build_hierar_binom_gain(data_combined, task_condition, coords):
+    n = data_combined[f"{task_condition}-nb"].unique()[0]
+    with pm.Model(coords=coords) as hierarchical_model:
+        # Global-level priors (one for each condition and time)
+        beta = pm.Beta("beta", alpha=1, beta=1, dims=("condition", "time"))
+        # Deterministic parameters for the differences
+        if len(coords['condition']) > 1:
+            delta_zpdes = pm.Deterministic("delta_zpdes",
+                                           (beta[1, 1] - beta[1, 0]) / (1 - beta[1, 0]))  # post - pre for zpdes
+            delta_baseline = pm.Deterministic("delta_baseline",
+                                              (beta[0, 1] - beta[0, 0]) / (1 - beta[0, 0]))  # post - pre for baseline
+            delta_groups = pm.Deterministic("delta_groups", delta_zpdes - delta_baseline)
+        # Else, i.e control:
+        else:
+            delta = pm.Deterministic("delta", beta[0, 1] - beta[0, 0])
+        # Data
+        g = pm.MutableData("g", data_combined.condition_idx, dims="obs_id")
+        t = pm.MutableData("t", data_combined.time_idx, dims="obs_id")
+        # Introduce a variability term for the local-level
+        sigma = pm.HalfNormal('sigma', 0.1, dims=("condition", "time"))
+        # Model local-level p's using the global-level p's as mean and sigma as SD
+        p_observation = pm.Beta('p_observation', mu=beta[g, t], sigma=sigma[g, t], dims="obs_id")
+        # Likelihood
+        pm.Binomial("y", n=n, p=p_observation, observed=data_combined[f'{task_condition}-correct'].values,
+                    dims="obs_id")
+    return hierarchical_model
+
+
 def build_hierar_binom_n_var(data_combined, task_condition, coords):
     with pm.Model(coords=coords) as hierarchical_model:
         # Global-level priors (one for each condition and time)
@@ -124,6 +155,71 @@ def build_hierar_binom_n_var(data_combined, task_condition, coords):
                     dims="obs_id")
     return hierarchical_model
 
+
+def build_hierar_binom_n_gain(data_combined, task_condition, coords):
+    with pm.Model(coords=coords) as hierarchical_model:
+        # Global-level priors (one for each condition and time)
+        beta = pm.Beta("beta", alpha=1, beta=1, dims=("condition", "time"))
+        # Deterministic parameters for the differences
+        if len(coords['condition']) > 1:
+            delta_zpdes = pm.Deterministic("delta_zpdes",
+                                           (beta[1, 1] - beta[1, 0]) / (1 - beta[1, 0]))  # post - pre for zpdes
+            delta_baseline = pm.Deterministic("delta_baseline",
+                                              (beta[0, 1] - beta[0, 0]) / (1 - beta[0, 0]))
+            delta_groups = pm.Deterministic("delta_groups", delta_zpdes - delta_baseline)
+        else:
+            delta = pm.Deterministic("delta", beta[0, 1] - beta[0, 0])  # post - pre for ctrl
+        # Data
+        g = pm.MutableData("g", data_combined.condition_idx, dims="obs_id")
+        t = pm.MutableData("t", data_combined.time_idx, dims="obs_id")
+        n = pm.MutableData("n", data_combined[f'{task_condition}-nb'], dims="obs_id")
+        # Introduce a variability term for the local-level
+        sigma = pm.HalfNormal('sigma', 0.1, dims=("condition", "time"))
+        # Model local-level p's using the global-level p's as mean and sigma as SD
+        p_observation = pm.Beta('p_observation', mu=beta[g, t], sigma=sigma[g, t], dims="obs_id")
+        # Likelihood
+        pm.Binomial("y", n=n, p=p_observation, observed=data_combined[f'{task_condition}-correct'].values,
+                    dims="obs_id")
+    return hierarchical_model
+
+
+def build_hierar_binom_covar_pre(data_combined, task_condition, coords):
+    with pm.Model(coords=coords) as hierarchical_model:
+        # Global-level priors (one for each condition and time)
+        beta = pm.Beta("beta", alpha=1, beta=1, dims=("condition", "time"))
+
+        # New: Coefficient for the pre-test covariate
+        pretest_coeff = pm.Normal("pretest_coeff", mu=0, sigma=1, dims="condition")
+
+        # Deterministic parameters for the differences
+        if len(coords['condition']) > 1:
+            delta_zpdes = pm.Deterministic("delta_zpdes", beta[1, 1] - beta[1, 0])  # post - pre for zpdes
+            delta_baseline = pm.Deterministic("delta_baseline", beta[0, 1] - beta[0, 0])  # post - pre for baseline
+            delta_groups = pm.Deterministic("delta_groups", delta_zpdes - delta_baseline)
+        else:
+            delta = pm.Deterministic("delta", beta[0, 1] - beta[0, 0])  # post - pre for ctrl
+
+        # Data
+        g = pm.MutableData("g", data_combined.condition_idx, dims="obs_id")
+        t = pm.MutableData("t", data_combined.time_idx, dims="obs_id")
+        n = pm.MutableData("n", data_combined[f'{task_condition}-nb'], dims="obs_id")
+
+        # New: pre-test accuracy as covariate
+        acc_pre = data_combined.groupby('participant_id')[f'{task_condition}-accuracy'].transform('first')
+        pretest_accuracy = pm.MutableData("pretest_accuracy", acc_pre, dims="obs_id")
+
+        # Introduce a variability term for the local-level
+        sigma = pm.HalfNormal('sigma', 0.1, dims=("condition", "time"))
+
+        # Model local-level p's using the global-level p's as mean and sigma as SD, and add pre-test accuracy as a covariate
+        p_mean = beta[g, t] + pretest_coeff[g] * pretest_accuracy
+        p_mean = pm.Deterministic("p_mean", pm.math.invlogit(p_mean))  # Ensure it's between 0 and 1
+        p_observation = pm.Beta('p_observation', mu=p_mean, sigma=sigma[g, t], dims="obs_id")
+
+        # Likelihood
+        pm.Binomial("y", n=n, p=p_observation, observed=data_combined[f'{task_condition}-correct'].values,
+                    dims="obs_id")
+    return hierarchical_model
 
 def build_RT_normal_hyper(data_combined, task_condition, coords):
     with pm.Model(coords=coords) as RT_model:
