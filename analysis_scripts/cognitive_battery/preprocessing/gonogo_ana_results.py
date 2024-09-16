@@ -2,6 +2,8 @@
 from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
 from analysis_scripts.cognitive_battery.preprocessing.utils import detect_outliers_and_clean
+from scipy.stats import norm
+
 
 def transform_str_to_list(row, columns):
     for column in columns:
@@ -86,12 +88,14 @@ def compute_nb_commission_errors(row: pd.core.series.Series) -> int:
 def compute_number_of_keyboard_input(row: pd.core.series.Series) -> int:
     return len(row["results_responses"])
 
+
 def transform_2_in_0(elt: int) -> int:
     """
         Take an int and returns the remainder in the euclidean division
         ("0 - 1 - 2" possible values and we want to transform 2 into 0)
     """
     return elt % 2
+
 
 def list_of_correct_hits(row: pd.core.series.Series) -> list:
     """
@@ -103,7 +107,8 @@ def list_of_correct_hits(row: pd.core.series.Series) -> list:
     rt_hits = [a * b for a, b in zip(results_rt, mask)]
     return rt_hits
 
-def compute_means(row: pd.core.series.Series) -> float:
+
+def compute_RT_means(row: pd.core.series.Series) -> float:
     """
         Useless function that returns the mean on a row (pandas already provides one)
     """
@@ -112,6 +117,7 @@ def compute_means(row: pd.core.series.Series) -> float:
     # print(np.mean(tmp[np.where(tmp!=0)]))
     # print(np.mean(row['result_clean_rt']))
     return np.mean(tmp[np.where(tmp != 0)])
+
 
 def compute_number_of_omissions(row: pd.core.series.Series) -> int:
     """
@@ -126,8 +132,9 @@ def compute_number_of_omissions(row: pd.core.series.Series) -> int:
                 count += 1
     return count
 
+
 def compute_result_sum_hr(row, NB_BLOCKS_TO_KEEP=25):
-    return NB_BLOCKS_TO_KEEP - row['NOGO-correct']
+    return NB_BLOCKS_TO_KEEP - row['miss-nb']
 
 
 def compute_numbercond(row, ind_cond):
@@ -171,16 +178,10 @@ def format_data(path, save_lfa):
     df = pd.read_csv(f"{path}/gonogo.csv", sep=",")
     df = df.apply(lambda row: transform_str_to_list(row, [
         'results_responses', 'results_rt', 'results_ind_previous', 'results_targetvalue']), axis=1)
-    # NOGO here represents in fact the miss:
-    df['NOGO-correct'] = df.apply(compute_number_of_omissions, axis=1)
-    df['miss-nb'] = df.apply(compute_number_of_omissions, axis=1) #nb of miss
+    # miss-nb here represents the number of omission (i.e signal but no response)
+    df['miss-nb'] = df.apply(compute_number_of_omissions, axis=1)
 
-    # Commission errors represent false alarm:
-    df['result_commission_errors'] = df.apply(compute_nb_commission_errors, axis=1)
-    df['FA-correct'] = df.apply(compute_nb_commission_errors, axis=1) #nb of false alarm
-    # dataframe = delete_uncomplete_participants(df)
-    dataframe = df
-    # false alarm relative to sequence length
+    # This snippet is used to treat old data where a bug remains
     df['nb_blocks'] = df.apply(compute_number_of_keyboard_input, axis=1)
     participant_id, nb_blocks, nb_go = find_participant_with_fewer_blocks(df)
     blocks_list = [nb_go, nb_blocks - nb_go]
@@ -190,24 +191,45 @@ def format_data(path, save_lfa):
     # print(f"Nb of blocks to keep: {NB_BLOCKS_TO_KEEP}")
     # print(f"Blocks to keep are go blocks: {is_go_blocks}")
     df = df.apply(lambda row: delete_non_recorded_blocks(row, NB_BLOCKS_TO_KEEP), axis=1)
+    # With most recent data; the block list variable should be [25, 25]
+
     df['nb_blocks'] = df.apply(compute_number_of_keyboard_input, axis=1)
     # Reaction times in or the number of correct go-trials (i.e., hits):
     df['result_clean_rt'] = df.apply(list_of_correct_hits, axis=1)
     df['HR-nb'] = df.apply(lambda row: len(row['result_clean_rt']), axis=1)
-    df['GO-rt'] = df.apply(compute_means, axis=1)
+    df['GO-rt'] = df.apply(compute_RT_means, axis=1)
+
+    # After getting RTs, focus on hits:
     df['GO-nb'] = nb_go
     df['GO-correct'] = df.apply(lambda row: compute_result_sum_hr(row, nb_go), axis=1)
     df['GO-accuracy'] = df.apply(lambda row: row['GO-correct'] / nb_go, axis=1)
-    df['NOGO-accuracy'] = df.apply(lambda row: row['NOGO-correct'] / nb_go, axis=1)
-    df['FA-accuracy'] = df.apply(lambda row: row['NOGO-correct'] / nb_blocks, axis=1)
+
+    # Then finish with false alarms
+    # Commission errors represent false alarm:
+    df['FA-correct'] = df.apply(compute_nb_commission_errors, axis=1)  # nb of false alarm i.e (no signal but clicked)
+    # false alarm relative to sequence length
+    df['FA-accuracy'] = df.apply(lambda row: row['FA-correct'] / min(nb_blocks - nb_go, NB_BLOCKS_TO_KEEP), axis=1)
     df['FA-nb'] = min(nb_blocks - nb_go, NB_BLOCKS_TO_KEEP)
+
+    # Clipping to avoid transformation problems with extreme values:
+    df['FA-accuracy'] = np.clip(df['FA-accuracy'], 1e-6, 1 - 1e-6)
+    df['GO-accuracy'] = np.clip(df['GO-accuracy'], 1e-6, 1 - 1e-6)
+
+    # Add d'
+    df['total-task-dprime'] = norm.ppf(df['GO-accuracy']) - norm.ppf(df['FA-accuracy'])
+
+    # Compute criterion (response bias)
+    df['total-task-criterion'] = -0.5 * (norm.ppf(df['FA-accuracy']) + norm.ppf(df['GO-accuracy']))
+
+    # Save all:
     conditions = ['GO', 'FA', 'total-task']
     conditions_accuracy = [f'{cdt}-accuracy' for cdt in conditions]
     conditions_correct = [f'{cdt}-correct' for cdt in conditions]
     conditions_nb = [f'{cdt}-nb' for cdt in conditions]
     conditions_RT = ['GO-rt']
     base = ['participant_id', 'task_status', 'condition']
-    df['total-task-correct'] = df['GO-correct'] + (NB_BLOCKS_TO_KEEP - df['NOGO-correct'])
+    sdt = ['total-task-dprime', 'total-task-criterion']
+    df['total-task-correct'] = df['GO-correct'] + (NB_BLOCKS_TO_KEEP - df['miss-nb'])
     df['total-task-nb'] = NB_BLOCKS_TO_KEEP * 2
     df['total-task-accuracy'] = df['total-task-correct'] / df['total-task-nb']
     nb_participants_init = len(df['participant_id'].unique())
@@ -215,14 +237,19 @@ def format_data(path, save_lfa):
     #     df = detect_outliers_and_clean(df, condition)
     # for condition in conditions_RT:
     #     df = detect_outliers_and_clean(df, condition)
-    df = detect_outliers_and_clean(df, 'total-task-accuracy')
-    df = detect_outliers_and_clean(df, 'GO-rt')
+    # df = detect_outliers_and_clean(df, 'GO-accuracy')
+    # df = detect_outliers_and_clean(df, 'FA-accuracy')
+    # df = detect_outliers_and_clean(df, 'total-task-accuracy')
+    # df = detect_outliers_and_clean(df, 'GO-rt')
+    df = detect_outliers_and_clean(df, 'total-task-dprime')
+    df = detect_outliers_and_clean(df, 'total-task-criterion')
     print(f"Gonogo, proportion removed: {len(df['participant_id'].unique())} / {nb_participants_init} ")
 
-    df = df[base + conditions_accuracy + conditions_RT + conditions_nb + conditions_correct]
+    df = df[base + conditions_accuracy + conditions_RT + conditions_nb + conditions_correct + sdt]
     if save_lfa:
         df.to_csv(f"{path}/gonogo_lfa.csv", index=False)
     return df
+
 
 def preprocess_and_save(study):
     task = "gonogo"

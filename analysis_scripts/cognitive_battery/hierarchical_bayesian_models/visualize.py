@@ -72,7 +72,7 @@ def plot_traces_and_deltas(studies, config_fig, all_conditions, no_cdt_studies=[
 
 def plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig, study,
                                   no_cdt_studies, path_to_store, ax, y_offset, step_offset, labels, rope_start,
-                                  rope_end, yticks, fig, xmin, xmax, path):
+                                  rope_end, yticks, fig, xmin, xmax, path, plot_mcmc_traces=True):
     '''
     For each difficulty condition of a task, load the trace of the estimated parameters of all specified models
     :param all_conditions:
@@ -105,8 +105,9 @@ def plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig,
                 # Open trace
                 trace = az.from_json(f"{path}/{task_condition}-{model}_inference_data.json")
                 # First plot the trace:
-                # plot_trace(trace, var_names, path_to_store=f"{path_to_store}/{task_condition}-{model}",
-                #            model_type=model, task=task, condition=task_condition)
+                if plot_mcmc_traces:
+                    plot_trace(trace, var_names, path_to_store=f"{path_to_store}/{task_condition}-{model}",
+                               model_type=model, task=task, condition=task_condition)
                 # Second plot the deltas:
                 ax, y_offset, labels, yticks = plot_deltas(trace, ax_deltas=ax,
                                                            task_condition=task_condition,

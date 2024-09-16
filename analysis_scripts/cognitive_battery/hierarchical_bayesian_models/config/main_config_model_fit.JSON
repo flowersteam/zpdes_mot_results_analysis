@@ -55,5 +55,13 @@
       "conditions": ["GO"],
       "models": ["RT_normal"]
     }
+  },
+  "sdt": {
+    "memorability": {
+      "conditions": ["total-task", "total-task-short", "100"]
+    },
+    "gonogo":{
+      "conditions": ["total-task"]
+    }
   }
 }

@@ -14,8 +14,8 @@ from analysis_scripts.utils import Chrono
 
 def run_all(studies):
     chrono = Chrono()
-    run_intra_evals(studies, metric_type="F1")
-    # run_hierarchical_bayesian_models(studies, pre_process=False, fit_models=False, get_plot=True, get_latex=False)
+    # run_intra_evals(studies, metric_type="F1")
+    run_hierarchical_bayesian_models(studies, pre_process=False, fit_models=False, get_plot=True, get_latex=False)
     # run_aggregate_score(studies)
     # run_dimensionality_reduction_models(studies)
     # run_questionnaires_analysis(studies)

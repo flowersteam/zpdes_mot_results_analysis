@@ -1,0 +1,22 @@
+{
+  "accuracy": {
+    "memorability": {
+      "conditions": ["total-task-hit", "total-task-short-hit", "100-hit"],
+      "models": ["hierar_binom_n_var"]
+    },
+    "gonogo": {
+      "conditions": ["GO"],
+      "models": ["hierar_binom_n_var"]
+    }
+  },
+  "sdt": {
+    "memorability": {
+      "conditions": ["total-task", "total-task-short", "100"],
+      "models": ["sdt"]
+    },
+    "gonogo":{
+      "conditions": ["total-task"],
+      "models": ["sdt"]
+    }
+  }
+}

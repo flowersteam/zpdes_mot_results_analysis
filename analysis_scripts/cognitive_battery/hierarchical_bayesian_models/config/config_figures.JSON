@@ -79,5 +79,22 @@
       "ufov_threshold_hyper": [0, 18],
       "ufov_threshold": [0, 18]
     }
+  },
+  "sdt": {
+    "figsizex": 7,
+    "figsizey": 6,
+    "xmin": -4,
+    "xmax": 4,
+    "rope_end": 1,
+    "rope_start": -1,
+    "var_specifics": {
+      "sdt": ["mu", "sigma", "delta_zpdes", "delta_baseline", "delta_groups"]
+    },
+    "var_delta_btw_study": {
+      "sdt": "mu"
+    },
+    "var_hyp_range_sddr": {
+      "sdt": [0, 0.5]
+    }
   }
 }

@@ -9,11 +9,11 @@ from . import ufov_ana_results as ufov
 
 
 def pre_process_all(study):
-    enumeration.preprocess_and_save(study=study)
+    memora.preprocess_and_save(study=study)
     gonogo.preprocess_and_save(study=study)
+    enumeration.preprocess_and_save(study=study)
     ts.preprocess_and_save(study=study)
     mot.preprocess_and_save(study=study)
-    memora.preprocess_and_save(study=study)
     lb.preprocess_and_save(study=study)
     wm.preprocess_and_save(study=study)
     ufov.preprocess_and_save(study=study)

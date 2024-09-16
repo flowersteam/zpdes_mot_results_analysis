@@ -17,6 +17,7 @@ def build_model(type, data, task_condition=None, coords=None):
               "precision_normal_hyper": build_precision_moteval_hyper,
               "precision_normal": build_precision_normal,
               "hierar_binom_covar_pre": build_hierar_binom_covar_pre,
+              "sdt": build_sdt_normal
               }
     return models[type](data, task_condition, coords)
 
@@ -220,6 +221,7 @@ def build_hierar_binom_covar_pre(data_combined, task_condition, coords):
         pm.Binomial("y", n=n, p=p_observation, observed=data_combined[f'{task_condition}-correct'].values,
                     dims="obs_id")
     return hierarchical_model
+
 
 def build_RT_normal_hyper(data_combined, task_condition, coords):
     with pm.Model(coords=coords) as RT_model:
@@ -429,3 +431,26 @@ def build_switching_cost_RT_hyper(data_combined, task_condition, coords):
             switching_cost = pm.Deterministic('switching_cost', mu[:, :, 1] - mu[:, :, 0])
             delta = pm.Deterministic("delta", switching_cost[0, 1] - switching_cost[0, 0])
     return switching_cost_RT
+
+
+def build_sdt_normal(data_combined, task_condition, coords):
+    with pm.Model(coords=coords) as RT_model:
+        # Data
+        g = pm.MutableData("g", data_combined.condition_idx, dims="obs_id")
+        t = pm.MutableData("t", data_combined.time_idx, dims="obs_id")
+        # Participant-level dprime
+        mu_d_prime = pm.Normal('mu', mu=0, sigma=10, dims=("condition", "time"))
+        sigma = pm.HalfNormal('sigma', 10, dims=("condition", "time"))
+        # Deterministic parameters for the differences
+        if len(coords['condition']) > 1:
+            delta_zpdes = pm.Deterministic("delta_zpdes", mu_d_prime[1, 1] - mu_d_prime[1, 0])  # post - pre for zpdes
+            delta_baseline = pm.Deterministic("delta_baseline", mu_d_prime[0, 1] - mu_d_prime[0, 0])  # post - pre for baseline
+            delta_groups = pm.Deterministic("delta_groups", delta_zpdes - delta_baseline)
+        else:
+            delta = pm.Deterministic("delta", mu_d_prime[0, 1] - mu_d_prime[0, 0])  # post - pre for zpdes
+        # likelihood
+        pm.Normal("y", mu=mu_d_prime[g, t], sigma=sigma[g, t],
+                  observed=data_combined[f'{task_condition}-dprime'], dims="obs_id")
+        # pm.LogNormal("y", mu=mu[g, t], sigma=sigma[g, t],
+        #              observed=data_combined[f'{task_condition}-rt'], dims="obs_id")
+    return RT_model

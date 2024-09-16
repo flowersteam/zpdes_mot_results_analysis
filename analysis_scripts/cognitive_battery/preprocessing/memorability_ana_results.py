@@ -3,6 +3,8 @@ from analysis_scripts.cognitive_battery.preprocessing.utils import *
 from pathlib import Path
 from analysis_scripts.cognitive_battery.preprocessing.utils import detect_outliers_and_clean
 
+from scipy.stats import norm
+
 
 # Treat data:
 def compute_result_exact_answers(row):
@@ -77,6 +79,16 @@ def treat_data(dataframe, dataframe_2, conditions_names):
     return dataframe, sum_observers
 
 
+def delete_single_participants(df):
+    # Step 1: Count occurrences of each participant_id
+    count_series = df['participant_id'].value_counts()
+    # Step 2: Filter to keep only participant_ids that appear exactly twice
+    valid_ids = count_series[count_series == 2].index
+    # Step 3: Filter the DataFrame based on valid participant_ids
+    filtered_df = df[df['participant_id'].isin(valid_ids)]
+    return filtered_df
+
+
 def format_data(path):
     # Get memorability 1
     csv_path_short_range = f"{path}/memorability_1.csv"
@@ -99,6 +111,7 @@ def format_data(path):
     tmp_conditions_names = [conditions_names_hit_miss, conditions_names_fa_cr, conditions_names_rt]
     # Treat data to get dataframe
     dataframe, sum_observers = treat_data(dataframe, dataframe_long_range, tmp_conditions_names)
+    dataframe = delete_single_participants(dataframe)
     # Rename columns
     for col in dataframe.columns:
         if 'hit-miss' in col:
@@ -121,14 +134,54 @@ def format_data(path):
     #     dataframe = detect_outliers_and_clean(dataframe, condition)
     # for condition in [f"{cdt}-rt" for cdt in tmp_conditions]:
     #     dataframe = detect_outliers_and_clean(dataframe, condition)
-    dataframe['total-task-hit-correct'] = convert_to_global_task(dataframe, [f'{cdt}-hit-correct' for cdt in tmp_conditions])
-    dataframe['total-task-fa-correct'] = convert_to_global_task(dataframe, [f'{cdt}-fa-correct' for cdt in tmp_conditions])
-    dataframe['total-task-nb'] = 20 * len(tmp_conditions)
+    dataframe['total-task-hit-correct'] = convert_to_global_task(dataframe,
+                                                                 [f'{cdt}-hit-correct' for cdt in tmp_conditions])
+    dataframe['total-task-fa-correct'] = convert_to_global_task(dataframe,
+                                                                [f'{cdt}-fa-correct' for cdt in tmp_conditions])
     dataframe['total-task-hit-nb'] = 20 * len(tmp_conditions)
-    dataframe['total-task-hit-accuracy'] = dataframe['total-task-hit-correct'] / dataframe['total-task-nb']
-    dataframe['total-task-fa-accuracy'] = dataframe['total-task-fa-correct'] / dataframe['total-task-nb']
+    dataframe['total-task-hit-accuracy'] = dataframe['total-task-hit-correct'] / dataframe['total-task-hit-nb']
+    dataframe['total-task-fa-accuracy'] = dataframe['total-task-fa-correct'] / dataframe['total-task-hit-nb']
+
+    dataframe['total-task-short-hit-correct'] = convert_to_global_task(dataframe,
+                                                                       [f'{cdt}-hit-correct' for cdt in tmp_conditions
+                                                                        if cdt != "100"])
+    dataframe['total-task-short-fa-correct'] = convert_to_global_task(dataframe,
+                                                                      [f'{cdt}-fa-correct' for cdt in tmp_conditions if
+                                                                       cdt != "100"])
+    dataframe['total-task-short-hit-nb'] = 20 * (len(tmp_conditions) - 1)
+    dataframe['total-task-short-hit-accuracy'] = dataframe['total-task-short-hit-correct'] / dataframe['total-task-short-hit-nb']
+    dataframe['total-task-short-fa-accuracy'] = dataframe['total-task-short-fa-correct'] / dataframe['total-task-short-hit-nb']
+
+    # Add d' and criterion:
+    # Clipping to avoid transformation problems with extreme values:
+    dataframe['total-task-fa-accuracy'] = np.clip(dataframe['total-task-fa-accuracy'], 1e-6, 1 - 1e-6)
+    dataframe['total-task-hit-accuracy'] = np.clip(dataframe['total-task-hit-accuracy'], 1e-6, 1 - 1e-6)
+    dataframe['total-task-dprime'] = norm.ppf(dataframe['total-task-hit-accuracy']) - norm.ppf(
+        dataframe['total-task-fa-accuracy'])
+    dataframe['total-task-criterion'] = -0.5 * (
+                norm.ppf(dataframe['total-task-fa-accuracy']) + norm.ppf(dataframe['total-task-hit-accuracy']))
+
+    # Add d' and criterion:
+    # Clipping to avoid transformation problems with extreme values:
+    dataframe['total-task-short-fa-accuracy'] = np.clip(dataframe['total-task-short-fa-accuracy'], 1e-6, 1 - 1e-6)
+    dataframe['total-task-short-hit-accuracy'] = np.clip(dataframe['total-task-short-hit-accuracy'], 1e-6, 1 - 1e-6)
+    dataframe['total-task-short-dprime'] = norm.ppf(dataframe['total-task-short-hit-accuracy']) - norm.ppf(
+        dataframe['total-task-short-fa-accuracy'])
+    dataframe['total-task-short-criterion'] = -0.5 * (norm.ppf(dataframe['total-task-short-fa-accuracy']) + norm.ppf(
+        dataframe['total-task-short-hit-accuracy']))
+
+    # Add d' and criterion:
+    # Clipping to avoid transformation problems with extreme values:
+    dataframe['100-fa-accuracy'] = np.clip(dataframe['100-fa-accuracy'], 1e-6, 1 - 1e-6)
+    dataframe['100-hit-accuracy'] = np.clip(dataframe['100-hit-accuracy'], 1e-6, 1 - 1e-6)
+    dataframe['100-dprime'] = norm.ppf(dataframe['100-hit-accuracy']) - norm.ppf(dataframe['100-fa-accuracy'])
+    dataframe['100-criterion'] = -0.5 * (
+                norm.ppf(dataframe['100-fa-accuracy']) + norm.ppf(dataframe['100-hit-accuracy']))
+
     dataframe['total-task-hit-rt'] = dataframe[[col for col in dataframe.columns if '-rt' in col]].mean(axis=1)
     dataframe = detect_outliers_and_clean(dataframe, 'total-task-hit-accuracy')
+    dataframe = detect_outliers_and_clean(dataframe, 'total-task-short-criterion')
+
     print(f"Memorability, proportion removed: {len(dataframe['participant_id'].unique())} / {nb_participants_init} ")
     dataframe.to_csv(f'{path}/memorability_lfa.csv', index=False)
 

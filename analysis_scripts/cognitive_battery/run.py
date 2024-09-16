@@ -17,7 +17,9 @@ studies = ["v3_prolific"]
 
 # Load a bunch of config files to choose what tasks/conditions/metrics you want to look at
 # First load the conditions you are interested in:
-with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/main_config_model_fit.JSON',
+# with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/main_config_model_fit.JSON',
+#           'r') as f:
+with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/test_SDT_config_model.JSON',
           'r') as f:
     all_conditions = json.load(f)
 
@@ -38,7 +40,6 @@ def run_hierarchical_bayesian_models(studies, pre_process=True, fit_models=True,
     if pre_process:
         for study in studies:
             pre_process_all(study=study)
-
     if fit_models:
         # Then get the traces for all studies and all conditions in defined in JSON file
         get_traces(studies, all_conditions, nb_samples=config_fit_models['nb_samples'],
@@ -46,7 +47,6 @@ def run_hierarchical_bayesian_models(studies, pre_process=True, fit_models=True,
     if get_plot:
         # Visualize the results
         plot_traces_and_deltas(studies, config_fig, all_conditions)
-
     if get_latex:
         # Write Latex Report in tables
         get_latex_tables(studies, config_fig, all_conditions)

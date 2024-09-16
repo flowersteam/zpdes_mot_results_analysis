@@ -112,7 +112,7 @@ def reformat_data(df: pd.DataFrame, task_condition: dict) -> (pd.DataFrame, dict
     times = ["pre", "post"]
     coords = {"condition": conditions, "time": times}
     # For individuals (might be deleted):
-    if f"{task_condition}-nb" in df:
+    if (f"{task_condition}-nb" in df) & (f"{task_condition}-correct" in df):
         n = data_combined[f"{task_condition}-nb"].unique()[0]
         deltas = (data_post[f'{task_condition}-correct'] - data_pre[f'{task_condition}-correct']) / n
     else:
