@@ -177,8 +177,8 @@ def format_data(path):
     dataframe['100-dprime'] = norm.ppf(dataframe['100-hit-accuracy']) - norm.ppf(dataframe['100-fa-accuracy'])
     dataframe['100-criterion'] = -0.5 * (
                 norm.ppf(dataframe['100-fa-accuracy']) + norm.ppf(dataframe['100-hit-accuracy']))
-
     dataframe['total-task-hit-rt'] = dataframe[[col for col in dataframe.columns if '-rt' in col]].mean(axis=1)
+    dataframe['total-task-short-hit-rt'] = dataframe[[col for col in dataframe.columns if '-rt' in col and '100' not in col]].mean(axis=1)
     dataframe = detect_outliers_and_clean(dataframe, 'total-task-hit-accuracy')
     dataframe = detect_outliers_and_clean(dataframe, 'total-task-short-criterion')
 

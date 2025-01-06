@@ -240,7 +240,7 @@ def format_data(path, save_lfa):
     # df = detect_outliers_and_clean(df, 'GO-accuracy')
     # df = detect_outliers_and_clean(df, 'FA-accuracy')
     # df = detect_outliers_and_clean(df, 'total-task-accuracy')
-    # df = detect_outliers_and_clean(df, 'GO-rt')
+    # df = detect_outliers_and_clean(df, 'GO-rt')x
     df = detect_outliers_and_clean(df, 'total-task-dprime')
     df = detect_outliers_and_clean(df, 'total-task-criterion')
     print(f"Gonogo, proportion removed: {len(df['participant_id'].unique())} / {nb_participants_init} ")
