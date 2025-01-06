@@ -1,0 +1,51 @@
+{
+  "conditions_acc": {
+    "moteval": [
+      "moteval_1-speed",
+      "moteval_4-speed",
+      "moteval_8-speed"
+    ],
+    "enumeration": [
+      "enumeration_9",
+      "enumeration_8",
+      "enumeration_6",
+      "enumeration_5",
+      "enumeration_7"
+    ],
+    "loadblindness": [
+      "loadblindness_far",
+      "loadblindness_near"
+    ],
+    "workingmemory": [
+      "workingmemory_4",
+      "workingmemory_6",
+      "workingmemory_7",
+      "workingmemory_8",
+      "workingmemory_5"
+    ]
+  },
+  "conditions_rt": {
+    "gonogo": [
+      "gonogo_GO"
+    ],
+    "taskswitch": [
+      "taskswitch_parity-switching-cost",
+      "taskswitch_relative-switching-cost"
+    ],
+    "ufov": [
+      "ufov_final"
+    ]
+  },
+  "conditions_d'": {
+    "memorability": [
+      "memorability_100-d'",
+      "memorability_short_range-d'"
+    ],
+    "gonogo": [
+      "gonogo_GO-d'"
+    ]
+  },
+  "conditions_ufov_threshold": [
+    "ufov_final"
+  ]
+}
