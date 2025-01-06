@@ -8,7 +8,7 @@ from analysis_scripts.cognitive_battery.PCA.normalize import normalize_data
 
 
 def run_broad_aggregate_difference(tasks, study, kept_columns, tasks_nb, expe_name, normalization_type="zscore"):
-    df = get_df([study])
+    df = get_df([study], tasks, tasks_nb)
     # With all data:
     df = df[kept_columns + tasks + tasks_nb]
     df.sort_values(by=['participant_id', 'task_status'], inplace=True)
