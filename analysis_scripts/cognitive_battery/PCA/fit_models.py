@@ -150,11 +150,11 @@ def compute_and_plot_diff(df_analysis, main_model, tasks, study, path, name="mai
         plot_diff_on_PC(pre_baseline, post_baseline, pre_zpdes, post_zpdes, pc_name, study, path, name=name)
 
 
-def run_PCA(config, tasks, tasks_nb, kept_columns, models=['PCA'], study_diff='v3_prolific', n_components=24):
+def run_PCA(config, tasks, tasks_nb, kept_columns, models=['PCA'], study_diff='v3_prolific', n_components=19):
     # Loop over every interesting combinations:
     for (studies, time_condition_to_keep, expe_name) in config:
         # First retrieve the correct df:
-        df = get_df(studies)
+        df = get_df(studies, tasks, tasks_nb)
         # With all data:
         df = df[kept_columns + tasks + tasks_nb]
         df.sort_values(by=['participant_id', 'task_status'], inplace=True)
@@ -179,5 +179,5 @@ def run_PCA(config, tasks, tasks_nb, kept_columns, models=['PCA'], study_diff='v
                          average_loadings, main_model_loadings, rmses, correlations)
 
             # Finally we look for enhancement in the latent space:
-            study_diff_df = get_df([study_diff])
+            study_diff_df = get_df([study_diff], tasks, tasks_nb)
             get_diff_from_PCA(study_diff_df, main_model, tasks, tasks_nb, study_diff, path, kept_columns)

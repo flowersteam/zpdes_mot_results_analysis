@@ -3,6 +3,7 @@ import pandas as pd
 import copy
 from scipy.stats import norm
 from scipy.stats import rankdata
+import numpy as np
 
 
 def zeros_ones_transform(row, n=10):
@@ -13,7 +14,18 @@ def zeros_ones_transform(row, n=10):
     return row
 
 
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, FunctionTransformer
+
+
 def normalize_data(data, columns_for_pca, columns_nb_trials, mode="zscore", shuffle=True):
+    def safe_log1p(x):
+        return np.log1p(np.where(x <= 0, 1e-9, x))
+
+    rt_pipeline = Pipeline(steps=[
+        ('log_transform', FunctionTransformer(func=safe_log1p, inverse_func=np.expm1, validate=True)),
+        ('scaler', StandardScaler())
+    ])
     if mode == "zscore":
         # Create a StandardScaler instance
         scaler = StandardScaler()
@@ -34,12 +46,13 @@ def normalize_data(data, columns_for_pca, columns_nb_trials, mode="zscore", shuf
                 except:
                     print("af")
             elif "rt" in col:
+                try:
+                    df_normalized[col] = rt_pipeline.fit_transform(df_normalized[col].values.reshape(-1, 1)).flatten()
+                except Exception as e:
+                    print("ah")
+            elif "d'" in col:
                 scaler = StandardScaler()
-                # Fit the scaler on the selected columns and transform the data
-                # df_normalized[col] = scaler.fit_transform(df_normalized[[col]])
-        # Center values (again???):
-        df_normalized[columns_for_pca] = (df_normalized[columns_for_pca] - df_normalized[columns_for_pca].mean()) / \
-                                         df_normalized[columns_for_pca].std()
+                df_normalized[col] = scaler.fit_transform(df_normalized[col].values.reshape(-1, 1)).flatten()
         df_normalized = df_normalized[columns_for_pca]
     elif mode == "percentile_rank":
         df_normalized = pd.DataFrame(columns=columns_for_pca)

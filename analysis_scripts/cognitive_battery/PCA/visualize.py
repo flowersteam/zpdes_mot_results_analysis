@@ -48,8 +48,10 @@ def create_correlation_circle(variable_contributions, variable_names, path):
 
 def get_scree_plot(pca_object, n_components, path):
     # Generate Scree Plot
-    n_components_kaiser = sum(pca_object.explained_variance_ > 1)
-    variance_explained_kaiser = sum(pca_object.explained_variance_ratio_[:n_components_kaiser]) * 100
+    # Previous method to handle nb components to keep:
+    # n_components_keep = sum(pca_object.explained_variance_ > 1)
+    n_components_keep = sum(pca_object.explained_variance_ratio_ > (1 / n_components))
+    variance_explained_kaiser = sum(pca_object.explained_variance_ratio_[:n_components_keep]) * 100
     plt.figure(figsize=(10, 6))
     # Create bar plot for explained variance
     plt.bar(range(1, n_components + 1), pca_object.explained_variance_ratio_,
@@ -62,9 +64,10 @@ def get_scree_plot(pca_object, n_components, path):
     plt.plot(range(1, n_components + 1), pca_object.explained_variance_ratio_, marker='o', color='red',
              label='Cumulative Variance Explained')
     # Add a vertical line for the Kaiser Criterion
-    plt.vlines(x=n_components_kaiser, ymin=0, ymax=1.1 * pca_object.explained_variance_ratio_[0], colors='black',
-               linestyles='dashed', label='Kaiser Criterion')
+    plt.vlines(x=n_components_keep, ymin=0, ymax=1.1 * pca_object.explained_variance_ratio_[0], colors='black',
+               linestyles='dashed', label='Variance Threshold')
     plt.title(f'Scree Plot - \n Variance explained by kept components: {variance_explained_kaiser:.2f} ')
+    plt.xticks([i+1 for i in range(n_components)])
     plt.xlabel('Principal Component')
     plt.ylabel('Variance Explained')
     plt.legend()
@@ -124,7 +127,7 @@ def get_heat_and_dendro_contrib(variable_contributions, variable_names, n_compon
     fig2.savefig(f"{path}/figures/dendro.png")
 
 
-def plot_loading_matrix(loadings_df, variable_names, n_components, path, name):
+def plot_loading_matrix(loadings_df, variable_names, n_components_to_keep, n_components, path, name):
     # Assuming you have variable_contributions, a 2D numpy array with the variable contributions to components
     # Also, make sure you have the original variable names in a list, e.g., variable_names
     # Keep only the first 10 components
@@ -135,7 +138,7 @@ def plot_loading_matrix(loadings_df, variable_names, n_components, path, name):
     # Perform hierarchical clustering and get the reordered indices
     order = leaves_list(linkage_matrix)
     # order = [9, 8, 21, 19, 15, 18, 16, 17, 20, 22, 4, 3, 2, 7, 6, 5, 10, 12, 13, 14, 11, 0, 1, 23]
-    order = [i for i in range(24)]
+    order = [i for i in range(n_components)]
     order.reverse()
     # Reorder the variable names based on clustering
     ordered_variable_names = [variable_names[i] for i in order]
@@ -143,23 +146,23 @@ def plot_loading_matrix(loadings_df, variable_names, n_components, path, name):
     fig, ax1 = plt.subplots(figsize=(12, 8))
     # Create a heatmap of the reordered variable contributions with a custom colormap
     # cmap = LinearSegmentedColormap.from_list("custom_colormap", [(0, 'blue'), (0.5, 'white'), (1, 'red')])
-    cax = ax1.matshow(loadings[order, :n_components], cmap="PuOr_r", aspect='auto',
-                      extent=(-0.5, n_components - 0.5, len(variable_names) - 0.5, -0.5))
+    cax = ax1.matshow(loadings[order, :n_components_to_keep], cmap="PuOr_r", aspect='auto',
+                      extent=(-0.5, n_components_to_keep - 0.5, len(variable_names) - 0.5, -0.5))
     # Invert the y-axis to match the dendrogram
     ax1.invert_yaxis()
     ax1.set_yticks(np.arange(len(ordered_variable_names)))
     ax1.set_yticklabels(ordered_variable_names)
-    ax1.set_xticks(np.arange(n_components))
-    ax1.set_xticklabels([f'PC{i + 1}' for i in range(n_components)], rotation=0)
+    ax1.set_xticks(np.arange(n_components_to_keep))
+    ax1.set_xticklabels([f'PC{i + 1}' for i in range(n_components_to_keep)], rotation=0)
     # Add text labels with values in black
     for i in range(len(variable_names)):
-        for j in range(n_components):
+        for j in range(n_components_to_keep):
             value = loadings[order, :][i, j]
             ax1.text(j, i, f'{value:.2f}', ha='center', va='center', color='black', fontsize=10, fontweight='bold')
     # Add a color bar for reference
     cbar = fig.colorbar(cax, ax=ax1, ticks=[-1, 0, 1])
     cbar.set_label('Loading')
-    plt.title(f'Variable Loadings for Principal Components (First {n_components} Components) - Heatmap')
+    plt.title(f'Variable Loadings for Principal Components (First {n_components_to_keep} Components) - Heatmap')
     fig.tight_layout()
     fig.savefig(f"{path}/figures/heatmap_{name}.png")
     plt.close()
@@ -223,6 +226,6 @@ def get_all_PCA_figures(df_pca, path, DR_type, model, n_components, variable_con
     create_correlation_circle(variable_contributions, columns_for_pca, path)
     get_heat_and_dendro_contrib(variable_contributions, columns_for_pca, n_components, path)
     n_components_to_keep = 6
-    plot_loading_matrix(average_loadings, columns_for_pca, n_components_to_keep, path, name="average")
-    plot_loading_matrix(main_model_loadings, columns_for_pca, n_components_to_keep, path, name="main")
+    plot_loading_matrix(average_loadings, columns_for_pca, n_components_to_keep, n_components, path, name="average")
+    plot_loading_matrix(main_model_loadings, columns_for_pca, n_components_to_keep, n_components, path, name="main")
     plot_correlation_matrix(df_pca, path, name="main")
