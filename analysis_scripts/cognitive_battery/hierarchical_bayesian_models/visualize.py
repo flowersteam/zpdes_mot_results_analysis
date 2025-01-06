@@ -44,17 +44,21 @@ def plot_traces_and_deltas(studies, config_fig, all_conditions, no_cdt_studies=[
             # Init few important variables:
             rope_start, rope_end, xmin, xmax, figsize, dpi, y_offset, step_offset = retrieve_config(config_fig,
                                                                                                     metric_type)
+            y_offset_time = y_offset
             labels, yticks = [], []
 
             # Init the delta summary figure
             # This figure is updated for all task measured on the metric type
             fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+            fig_time, ax_time = plt.subplots(figsize=figsize, dpi=dpi)
             set_ax_deltas(ax, xmin, xmax)
+            set_ax_deltas(ax_time, xmin, xmax)
 
             # Plot vertical lines for hdi:
             # plot_vline(rope_start, rope_end, ax)
             # Instead of plotting a rope, we plot the null effect point on 0:
             plot_vline_0(ax)
+            plot_vline_0(ax_time)
 
             for task in all_conditions[metric_type].keys():
                 path = f"{path_study}/{task}"
@@ -65,14 +69,23 @@ def plot_traces_and_deltas(studies, config_fig, all_conditions, no_cdt_studies=[
                 y_offset = plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig, study,
                                                          no_cdt_studies, path_to_store, ax, y_offset, step_offset,
                                                          labels,
-                                                         rope_start, rope_end, yticks, fig, xmin, xmax, path)
+                                                         rope_start, rope_end, yticks, fig, xmin, xmax, path, time=False,
+                                                         plot_mcmc_traces=True)
+                y_offset_time = plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig, study,
+                                                              no_cdt_studies, path_to_store, ax_time, y_offset_time,
+                                                              step_offset,
+                                                              labels,
+                                                              rope_start, rope_end, yticks, fig_time, xmin, xmax, path,
+                                                              time=True, plot_mcmc_traces=False)
+
             fig.savefig(f"{path_study}/results_{metric_type}.svg", bbox_inches='tight')
+            fig_time.savefig(f"{path_study}/results_{metric_type}-time.svg", bbox_inches='tight')
             plt.close()
 
 
 def plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig, study,
                                   no_cdt_studies, path_to_store, ax, y_offset, step_offset, labels, rope_start,
-                                  rope_end, yticks, fig, xmin, xmax, path, plot_mcmc_traces=True):
+                                  rope_end, yticks, fig, xmin, xmax, path, plot_mcmc_traces=True, time=False):
     '''
     For each difficulty condition of a task, load the trace of the estimated parameters of all specified models
     :param all_conditions:
@@ -109,17 +122,31 @@ def plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig,
                     plot_trace(trace, var_names, path_to_store=f"{path_to_store}/{task_condition}-{model}",
                                model_type=model, task=task, condition=task_condition)
                 # Second plot the deltas:
-                ax, y_offset, labels, yticks = plot_deltas(trace, ax_deltas=ax,
-                                                           task_condition=task_condition,
-                                                           task=task, y_offset=y_offset,
-                                                           step_offset=step_offset,
-                                                           labels=labels, rope_start=rope_start,
-                                                           rope_end=rope_end, yticks=yticks,
-                                                           model=model,
-                                                           no_condition=is_a_control_study, study=study,
-                                                           sddr_mu=sddr_mu, sddr_sigma=sddr_sigma,
-                                                           xmax=xmax, add_pre=True, config_fig=config_fig,
-                                                           metric_type=metric_type)
+                if time:
+                    ax, y_offset, labels, yticks = plot_deltas_time(trace, ax_deltas=ax,
+                                                                    task_condition=task_condition,
+                                                                    task=task, y_offset=y_offset,
+                                                                    step_offset=step_offset,
+                                                                    labels=labels, rope_start=rope_start,
+                                                                    rope_end=rope_end, yticks=yticks,
+                                                                    model=model,
+                                                                    no_condition=is_a_control_study, study=study,
+                                                                    sddr_mu=sddr_mu, sddr_sigma=sddr_sigma,
+                                                                    xmax=xmax, add_pre=True, config_fig=config_fig,
+                                                                    metric_type=metric_type)
+                else:
+                    # Second plot the deltas:
+                    ax, y_offset, labels, yticks = plot_deltas(trace, ax_deltas=ax,
+                                                               task_condition=task_condition,
+                                                               task=task, y_offset=y_offset,
+                                                               step_offset=step_offset,
+                                                               labels=labels, rope_start=rope_start,
+                                                               rope_end=rope_end, yticks=yticks,
+                                                               model=model,
+                                                               no_condition=is_a_control_study, study=study,
+                                                               sddr_mu=sddr_mu, sddr_sigma=sddr_sigma,
+                                                               xmax=xmax, add_pre=True, config_fig=config_fig,
+                                                               metric_type=metric_type)
             # Add margin between task condition:
             y_offset += step_offset
         # Add lines to separate between tasks
@@ -204,7 +231,7 @@ def plot_deltas(trace, ax_deltas=None, task_condition="5-nb-targets", task="mote
     else:
         labels += ["", f"{task}_{task_condition}", ""]
     if add_pre:
-        p, sddr, hdi = get_pre_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma)
+        p, sddr, hdi = get_time_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma, time="pre")
         probas.append(p)
         sddrs.append(sddr)
         hdis.append(hdi)
@@ -223,16 +250,71 @@ def plot_deltas(trace, ax_deltas=None, task_condition="5-nb-targets", task="mote
     return ax_deltas, y_offset, labels, yticks
 
 
-def get_pre_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma):
+def plot_deltas_time(trace, ax_deltas=None, task_condition="5-nb-targets", task="moteval", y_offset=0,
+                     step_offset=0.2, labels=[], rope_start=-0.05, rope_end=0.05, yticks=[], model="hierarbinom",
+                     no_condition=False, study="v3_prolific", sddr_mu=0, sddr_sigma=0.05, xmax=0.3, add_pre=True,
+                     config_fig=None, metric_type=None):
+    # plot_distribution_of_deltas(deltas, data_pre)
+    probas, hdis, sddrs = [], [], []
+    sessions = ["pre", "post", "post-pre"]
+    color_bars = ["white", "#9ad1aa", "#60a0b0"]
+    color_txt = ["white"] * 3
+    conditions = []
+    for session in sessions:
+        p, sddr, hdi = get_time_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma, time=session)
+        probas.append(p)
+        sddrs.append(sddr)
+        hdis.append(hdi)
+        conditions.append(f"diff_{session}")
+    # just for display purposes:
+    if model != "hierar_binom_n_var":
+        labels += ["", f"{task}_{task_condition} \n {model}", "", ""]
+    else:
+        labels += ["", f"{task}_{task_condition}", "", ""]
+    yticks += [y_offset, y_offset + step_offset / 2, y_offset + step_offset, y_offset + (2 * step_offset)]
+    for delta, p, sddr, c_b, c_t, c_l in zip(hdis, probas, sddrs, color_bars, color_txt, conditions):
+        ax_deltas = plot_barh(delta, p, sddr, ax_deltas, height=0.5, color_bar=c_b, color_txt=c_t,
+                              label=f"{task}_{task_condition}",
+                              y_offset=y_offset, xmax=xmax)
+        y_offset += step_offset
+    return ax_deltas, y_offset, labels, yticks
+
+
+def get_time_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma, time="pre"):
+    if time == "pre":
+        session = 0
+    elif time == "post":
+        session = 1
+    else:
+        return get_post_pre_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma)
     var = config_fig[metric_type]["var_delta_btw_study"][model]
     trace_var = trace.posterior[var]
-    trace_diff = trace_var[:, :, 1, 0] - trace_var[:, :, 0, 0]
+    trace_diff = trace_var[:, :, 1, session] - trace_var[:, :, 0, session]
     vals = trace_diff.values.flatten()
     # returns the hdi
     hdi = az.hdi(vals, hdi_prob=0.94)
     proba_positive_effect = np.mean((trace_diff > 0))
     proba = np.max([proba_positive_effect, 1 - proba_positive_effect])
     flat_samples = trace_diff.values[:, 1000:].flatten()
+    kde = stats.gaussian_kde(flat_samples)
+    posterior_density_at_zero = kde(0)  # Evaluate the density at zero
+    prior_density_at_zero = stats.norm.pdf(0, loc=sddr_mu, scale=sddr_sigma)
+    sddr = posterior_density_at_zero / prior_density_at_zero
+    return proba, sddr[0], hdi
+
+
+def get_post_pre_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma):
+    var = config_fig[metric_type]["var_delta_btw_study"][model]
+    trace_var = trace.posterior[var]
+    trace_diff_zpdes = trace_var[:, :, 1, 1] - trace_var[:, :, 1, 0]
+    trace_diff_baseline = trace_var[:, :, 0, 1] - trace_var[:, :, 0, 0]
+    trace_diff_diff = trace_diff_zpdes - trace_diff_baseline
+    vals = trace_diff_diff.values.flatten()
+    # returns the hdi
+    hdi = az.hdi(vals, hdi_prob=0.94)
+    proba_positive_effect = np.mean((trace_diff_diff > 0))
+    proba = np.max([proba_positive_effect, 1 - proba_positive_effect])
+    flat_samples = trace_diff_diff.values[:, 1000:].flatten()
     kde = stats.gaussian_kde(flat_samples)
     posterior_density_at_zero = kde(0)  # Evaluate the density at zero
     prior_density_at_zero = stats.norm.pdf(0, loc=sddr_mu, scale=sddr_sigma)

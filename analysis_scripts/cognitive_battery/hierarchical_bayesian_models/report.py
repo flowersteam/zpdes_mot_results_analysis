@@ -2,6 +2,7 @@ from .utils import get_SDDR
 import arviz as az
 from latex import build_pdf
 import numpy as np
+from datetime import datetime
 
 
 def get_latex_tables(studies, config_fig, all_conditions):
@@ -11,7 +12,6 @@ def get_latex_tables(studies, config_fig, all_conditions):
     with open("analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/main_preamble_reports.tex",
               'r') as file:
         str = file.read()
-    # str = "\documentclass{article} \n \\begin{document} \n"
     times = ["post", "pre"]
     counter = 0
     for time in times:
@@ -29,13 +29,14 @@ def get_latex_tables(studies, config_fig, all_conditions):
                     if counter % 5 == 0: str += "\clearpage \n"
                     print(f"{task}-{model}")
     str += "\n \end{document} "
-    text_file = open(f"outputs/{studies}-tables_new.tex", "w")
+    name = datetime.now().strftime("%Y%m%d-%H%M%S")
+    text_file = open(f"outputs/{name}-tables_new.tex", "w")
     _ = text_file.write(str)
     text_file.close()
-    with open(f"outputs/{studies}-tables_new.tex") as f:
+    with open(f"outputs/{name}-tables_new.tex") as f:
         pdf = build_pdf(f)
     # Save the resulting PDF to file
-    pdf.save_to(f"outputs/{studies}-tables_new.pdf")
+    pdf.save_to(f"outputs/{name}-tables_new.pdf")
 
 
 def generate_latex_table(studies, config_fig, all_conditions, time="pre", model="hierar_binom_n_var", task="moteval"):
@@ -119,13 +120,13 @@ def generate_latex_table(studies, config_fig, all_conditions, time="pre", model=
 def generate_latex_post_table(studies, config_fig, all_conditions, time="pre", model="hierar_binom_n_var",
                               task="moteval"):
     latex_str = "\\begin{table}[h]\n\\centering\n\\begin{adjustbox}{width=1.5\\textwidth,center=\\textwidth}\n" \
-                "\\begin{tabular}{|c|c|c|M{3cm}|c|c|c|M{3.1cm}|c|c|}\n\\hline\n"
+                "\\begin{tabular}{|c|c|c|M{3cm}|c|c|c|M{3.1cm}|c|c|c|}\n\\hline\n"
     latex_str += "\\textbf{Study} & \\textbf{Condition} & \\textbf{Group} & " \
                  "\\textbf{Within group mean} & \\textbf{HDI} & " \
                  "\\textbf{Within group P(effect)}" \
                  "& \\textbf{Within group BF10} &" \
                  "\\textbf{Mean posterior of between-group difference} & \\textbf{Between group HDI} &" \
-                 " \\textbf{Between group P(effect)} " \
+                 " \\textbf{Between group P(effect)} & \\textbf{Between group BF10}" \
                  "\\\\ \\hline\n "
     groups = ['zpdes', 'baseline']
     for study in studies:
@@ -135,66 +136,27 @@ def generate_latex_post_table(studies, config_fig, all_conditions, time="pre", m
                 rope_start, rope_end = config_fig[metric_type]["rope_start"], config_fig[metric_type]["rope_end"]
                 for task_condition in all_conditions[metric_type][task]['conditions']:
                     nb_row_per_study = len(all_conditions[metric_type][task]['conditions']) * len(groups)
-                    path = f"outputs/{study}/cognitive_battery/{task}"
-                    trace = az.from_json(f"{path}/{task_condition}-{model}_inference_data.json")
-                    var = config_fig[metric_type]["var_delta_btw_study"][model]
-                    trace_var = trace.posterior[var]
-                    trace_summary = az.summary(trace_var)
-                    time_index = 0 if time == "pre" else 1
-                    # 1) Get all traces:
-                    # 1.2) POST - PRE within each group:
-                    evolution_trace_diff = trace_var[:, :, :, 1] - trace_var[:, :, :, 0]
-                    # Check if this sig:
-                    mu, sigma = config_fig[metric_type]["var_hyp_range_sddr"][model]
-                    params_sddr = {'mu': mu, 'sigma': sigma}
-                    sddr_z, sddr_b = get_SDDR(evolution_trace_diff[:, :, 1], var, params_sddr), get_SDDR(
-                        evolution_trace_diff[:, :, 0], var, params_sddr)
-                    BF = {'zpdes': 1 / sddr_z, 'baseline': 1 / sddr_b}
-                    # 1.3) Diff of diff (i.e POST-PRE diff between groups)
-                    diff_diff_trace = (trace_var[:, :, 1, 1] - trace_var[:, :, 1, 0]) - (
-                            trace_var[:, :, 0, 1] - trace_var[:, :, 0, 0])
-                    # 2) Get all summary statistics:
-                    # 2.2) POST - PRE within each group:
-                    evolution_trace_summary_diff = az.summary(evolution_trace_diff)
-                    # 2.3) Diff of diff (i.e POST-PRE diff between groups)
-                    diff_diff_summary = az.summary(diff_diff_trace)
-                    # diff_diff_proba = sum(
-                    #     [(sum(chain.values > 0)) / (len(chain.values)) for chain in diff_diff_trace]) / len(
-                    #     diff_diff_trace)
-                    diff_diff_proba = np.mean(
-                                [np.max([sum(chain.values > 0), sum(chain.values < 0)]) / (len(chain.values)) for chain
-                                 in diff_diff_trace])
+                    # First get all metrics:
+                    (trace_summary, evolution_trace_summary_diff, var, evolution_trace_diff,
+                     BF, diff_diff_summary, diff_diff_proba, diff_diff_BF) = compute_metrics(study, task,
+                                                                                             task_condition, model,
+                                                                                             config_fig, metric_type,
+                                                                                             time)
                     first_task_condition_entry = True
                     for grp in groups:
-                        grp_index = 1 if grp == "zpdes" else 0
+                        (evolution_trace_diff, evolution_info_diff,
+                         evolution_proba_diff) = get_evolution_diff(model, grp,
+                                                                    time,
+                                                                    evolution_trace_summary_diff,
+                                                                    var,
+                                                                    evolution_trace_diff,
+                                                                    config_fig, metric_type)
                         if first_study_entry:
                             # Calculate the number of rows for this study entry
                             latex_str += f"\\multirow{{{nb_row_per_study}}}{{*}}{{{rename_str_for_latex(study)}}} & "
                             first_study_entry = False
                         else:
                             latex_str += " & "
-                        if model == "switching_cost":
-                            tmp_grp = 1 if grp == "zpdes" else 0
-                            tmp_var = 1 if time == "post" else 0
-                            info = trace_summary.loc[f"switching_cost[{tmp_grp}, {tmp_var}]"]
-                            evolution_info_diff = evolution_trace_summary_diff.loc[f'{var}[{tmp_grp}]']
-                            # evolution_proba_diff = sum(
-                            #     [(sum(chain.values > rope_end) + sum(chain.values < rope_start)) / (len(chain.values))
-                            #      for chain in evolution_trace_diff[:, :, grp_index]]) / len(
-                            #     evolution_trace_diff[:, :, grp_index])
-                            evolution_proba_diff = np.mean(
-                                [np.max([sum(chain.values > 0), sum(chain.values < 0)]) / (len(chain.values)) for chain
-                                 in evolution_trace_diff[:, :, grp_index]])
-                        else:
-                            info = trace_summary.loc[f'{var}[{grp}, {time}]']
-                            evolution_info_diff = evolution_trace_summary_diff.loc[f'{var}[{grp}]']
-                            # evolution_proba_diff = sum(
-                            #     [(sum(chain.values > rope_end) + sum(chain.values < rope_start)) / (len(chain.values))
-                            #      for chain in evolution_trace_diff[:, :, grp_index]]) / len(
-                            #     evolution_trace_diff[:, :, grp_index])
-                            evolution_proba_diff = np.mean(
-                                [np.max([sum(chain.values > 0), sum(chain.values < 0)]) / (len(chain.values)) for chain
-                                 in evolution_trace_diff[:, :, grp_index]])
                         if first_task_condition_entry:
                             # condition + group
                             latex_str += f" \\multirow{{{2}}}{{*}}{{{rename_str_for_latex(task_condition)}}} & " \
@@ -211,9 +173,10 @@ def generate_latex_post_table(studies, config_fig, all_conditions, time="pre", m
                             latex_str += f" \\multirow{{{2}}}{{*}}{{{diff_diff_summary['mean'].values[0]:.2f}}} & "
                             latex_str += f" \\multirow{{{2}}}{{*}}{{[{diff_diff_summary['hdi_3%'].values[0]:.2f}, {diff_diff_summary['hdi_97%'].values[0]:.2f}]}} & "
                             if diff_diff_proba > 0.5:
-                                latex_str += " \\multirow{2}{*}{\\textbf{" + f"{diff_diff_proba:.2f}" + "}} \\\\ "
+                                latex_str += " \\multirow{2}{*}{\\textbf{" + f"{diff_diff_proba:.2f}" + "}} & "
                             else:
-                                latex_str += " \\multirow{2}{*}{" + f"{diff_diff_proba:.2f}" + "} \\\\ "
+                                latex_str += " \\multirow{2}{*}{" + f"{diff_diff_proba:.2f}" + "}  & "
+                            latex_str += f" \\multirow{{{2}}}{{*}}{{{diff_diff_BF:.2f}}} \\\\"
                             first_task_condition_entry = False
                         else:
                             latex_str += f" & {grp.capitalize()} & {evolution_info_diff['mean']:.2f} & "
@@ -223,7 +186,7 @@ def generate_latex_post_table(studies, config_fig, all_conditions, time="pre", m
                             else:
                                 latex_str += f" {evolution_proba_diff:.2f} & "
                             latex_str += f"{BF[grp]:.2f} & "
-                            latex_str += f" &\\\\ "
+                            latex_str += f" & & &\\\\ "
                         if grp == groups[-1] and task_condition == all_conditions[metric_type][task]['conditions'][-1]:
                             latex_str += "\\hline\n"
                         else:
@@ -235,6 +198,57 @@ def generate_latex_post_table(studies, config_fig, all_conditions, time="pre", m
                  rename_str_for_latex(model) + " model.}\n" \
                                                "\\label{tab:my_label}\n\\end{table}"
     return latex_str
+
+
+def compute_metrics(study, task, task_condition, model, config_fig, metric_type, time):
+    path = f"outputs/{study}/cognitive_battery/{task}"
+    trace = az.from_json(f"{path}/{task_condition}-{model}_inference_data.json")
+    var = config_fig[metric_type]["var_delta_btw_study"][model]
+    trace_var = trace.posterior[var]
+    trace_summary = az.summary(trace_var)
+    time_index = 0 if time == "pre" else 1
+    # 1) Get all traces:
+    # 1.2) POST - PRE within each group:
+    evolution_trace_diff = trace_var[:, :, :, 1] - trace_var[:, :, :, 0]
+    # Check if this sig:
+    mu, sigma = config_fig[metric_type]["var_hyp_range_sddr"][model]
+    params_sddr = {'mu': mu, 'sigma': sigma}
+    sddr_z, sddr_b = get_SDDR(evolution_trace_diff[:, :, 1], var, params_sddr), get_SDDR(
+        evolution_trace_diff[:, :, 0], var, params_sddr)
+    BF = {'zpdes': 1 / sddr_z, 'baseline': 1 / sddr_b}
+    # 1.3) Diff of diff (i.e POST-PRE diff between groups)
+    # diff_diff_trace = (trace_var[:, :, 1, 1] - trace_var[:, :, 1, 0]) - (
+    #         trace_var[:, :, 0, 1] - trace_var[:, :, 0, 0])
+    # Evolution ZPDES - Evolution Baseline
+    diff_diff_trace = evolution_trace_diff[:, :, 1] - evolution_trace_diff[:, :, 0]
+    # 2) Get all summary statistics:
+    # 2.2) POST - PRE within each group:
+    evolution_trace_summary_diff = az.summary(evolution_trace_diff)
+    # 2.3) Diff of diff (i.e POST-PRE diff between groups)
+    diff_diff_summary = az.summary(diff_diff_trace)
+    # diff_diff_proba = sum(
+    #     [(sum(chain.values > 0)) / (len(chain.values)) for chain in diff_diff_trace]) / len(
+    #     diff_diff_trace)
+    diff_diff_proba = np.mean(
+        [np.max([sum(chain.values > 0), sum(chain.values < 0)]) / (len(chain.values)) for chain
+         in diff_diff_trace])
+    diff_diff_BF = 1 / get_SDDR(diff_diff_trace, var, params_sddr)
+    return trace_summary, evolution_trace_summary_diff, var, evolution_trace_diff, BF, diff_diff_summary, diff_diff_proba, diff_diff_BF
+
+
+def get_evolution_diff(model, grp, time, evolution_trace_summary_diff, var, evolution_trace_diff, config_fig,
+                       metric_type):
+    grp_index = 1 if grp == "zpdes" else 0
+    if model == "switching_cost":
+        tmp_grp = 1 if grp == "zpdes" else 0
+        tmp_var = 1 if time == "post" else 0
+        evolution_info_diff = evolution_trace_summary_diff.loc[f'{var}[{tmp_grp}]']
+    else:
+        evolution_info_diff = evolution_trace_summary_diff.loc[f'{var}[{grp}]']
+    evolution_proba_diff = np.mean(
+        [np.max([sum(chain.values > 0), sum(chain.values < 0)]) / (len(chain.values)) for chain
+         in evolution_trace_diff[:, :, grp_index]])
+    return evolution_trace_diff, evolution_info_diff, evolution_proba_diff
 
 
 def rename_str_for_latex(input_str):
