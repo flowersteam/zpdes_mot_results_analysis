@@ -1,17 +1,7 @@
 {
   "accuracy": {
-    "loadblindness": {
-      "conditions": ["total-task"],
-      "models": ["hierar_binom_n_var"],
-      "_models": ["hierar_binom_covar_pre", "hierar_binom_n_gain", "hierar_binom_n_var"]
-    },
     "enumeration": {
       "conditions": ["total-task"],
-      "models": ["hierar_binom_n_var"],
-      "_models": ["hierar_binom_covar_pre", "hierar_binom_n_gain", "hierar_binom_n_var"]
-    },
-    "memorability": {
-      "conditions": ["total-task-hit"],
       "models": ["hierar_binom_n_var"],
       "_models": ["hierar_binom_covar_pre", "hierar_binom_n_gain", "hierar_binom_n_var"]
     },
@@ -20,17 +10,17 @@
       "models": ["hierar_binom_n_var"],
       "_models": ["hierar_binom_covar_pre", "hierar_binom_n_gain", "hierar_binom_n_var"]
     },
-    "gonogo": {
-      "conditions": ["GO"],
+    "taskswitch": {
+      "conditions": ["switch"],
       "models": ["hierar_binom_n_var"],
       "_models": ["hierar_binom_covar_pre", "hierar_binom_n_gain", "hierar_binom_n_var"]
     },
-    "moteval": {
+    "loadblindness": {
       "conditions": ["total-task"],
       "models": ["hierar_binom_n_var"],
       "_models": ["hierar_binom_covar_pre", "hierar_binom_n_gain", "hierar_binom_n_var"]
     },
-    "taskswitch": {
+    "moteval": {
       "conditions": ["total-task"],
       "models": ["hierar_binom_n_var"],
       "_models": ["hierar_binom_covar_pre", "hierar_binom_n_gain", "hierar_binom_n_var"]
@@ -44,7 +34,7 @@
   },
   "RT": {
     "memorability": {
-      "conditions": ["total-task-hit"],
+      "conditions": ["total-task-short-hit", "100"],
       "models": ["RT_normal"]
     },
     "taskswitch": {
@@ -58,10 +48,12 @@
   },
   "sdt": {
     "memorability": {
-      "conditions": ["total-task", "total-task-short", "100"]
+      "conditions": ["total-task-short", "100"],
+      "models": ["sdt"]
     },
     "gonogo":{
-      "conditions": ["total-task"]
+      "conditions": ["total-task"],
+      "models": ["sdt"]
     }
   }
 }

@@ -1,7 +1,7 @@
 {
   "RT": {
-    "figsizex": 4,
-    "figsizey": 3,
+    "figsizex": 8,
+    "figsizey": 7,
     "xmin": -100,
     "xmax": 100,
     "rope_end": 50,
@@ -61,8 +61,8 @@
     }
   },
   "ufov_threshold": {
-    "figsizex": 2,
-    "figsizey": 3,
+    "figsizex": 3,
+    "figsizey": 4,
     "xmin": -300,
     "xmax": 300,
     "rope_end": 17.5,
