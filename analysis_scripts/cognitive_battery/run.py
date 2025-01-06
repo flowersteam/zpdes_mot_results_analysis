@@ -17,9 +17,9 @@ studies = ["v3_prolific"]
 
 # Load a bunch of config files to choose what tasks/conditions/metrics you want to look at
 # First load the conditions you are interested in:
-# with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/main_config_model_fit.JSON',
+# with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/short_test.JSON',
 #           'r') as f:
-with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/test_SDT_config_model.JSON',
+with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/main_config_model_fit.JSON',
           'r') as f:
     all_conditions = json.load(f)
 
@@ -69,7 +69,7 @@ def run_dimensionality_reduction_models(studies):
     chrono = Chrono()
     print("\n=====================Start [Cognitive Battery] -  dimensionality reduction analysis=====================")
     # This name is used mainly to store results
-    global_expe_name = "probit-all-tasks-ordered"
+    global_expe_name = "probit-all-tasks-ordered-new-metrics"
 
     # Choose on what data are fitted the PCA models:
     config = []
@@ -81,14 +81,14 @@ def run_dimensionality_reduction_models(studies):
 
     # Choose the difficulty condition per task to keep for dimensionality reduction:
     # These are specific parameters to plot the results
-    with open('analysis_scripts/cognitive_battery/PCA/config/conditions.JSON', 'r') as f:
+    with open('analysis_scripts/cognitive_battery/PCA/config/conditions_update.JSON', 'r') as f:
         conditions = json.load(f)
     tasks, tasks_nb, kept_columns = format_conditions(conditions)
-
+    n_components = len(tasks)
     models = ["PCA", "ICA"]
 
     # Finally run all models specified in models (here a PCA and a FastICA)
-    run_PCA(config, tasks, tasks_nb, kept_columns, study_diff=studies[0], models=models, n_components=24)
+    run_PCA(config, tasks, tasks_nb, kept_columns, study_diff=studies[0], models=models, n_components=n_components)
 
     # Print time taken
     print(f"Time taken to run the script: {chrono.get_elapsed_time()} seconds")
