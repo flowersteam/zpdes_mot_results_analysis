@@ -1,0 +1,9 @@
+{
+  "accuracy": {
+    "moteval": {
+      "conditions": ["total-task"],
+      "models": ["hierar_binom_n_var"],
+      "_models": ["hierar_binom_covar_pre", "hierar_binom_n_gain", "hierar_binom_n_var"]
+    }
+  }
+}

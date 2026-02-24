@@ -19,5 +19,5 @@ def pre_process_all(study):
     ufov.preprocess_and_save(study=study)
 
 
-if __name__ == '__main__':
-    pre_process_all('v3_prolific')
+if __name__ == "__main__":
+    pre_process_all("v3_prolific")

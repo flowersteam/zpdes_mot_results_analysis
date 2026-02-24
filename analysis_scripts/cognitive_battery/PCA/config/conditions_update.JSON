@@ -1,5 +1,5 @@
 {
-  "conditions_acc": {
+  "conditions_accuracy": {
     "moteval": [
       "moteval_1-speed",
       "moteval_4-speed",
@@ -36,16 +36,18 @@
       "ufov_final"
     ]
   },
-  "conditions_d'": {
+  "conditions_dprime": {
     "memorability": [
-      "memorability_100-d'",
-      "memorability_short_range-d'"
+      "memorability_100",
+      "memorability_total-task-short"
     ],
     "gonogo": [
-      "gonogo_GO-d'"
+      "gonogo_total-task"
     ]
   },
-  "conditions_ufov_threshold": [
+  "conditions_threshold": {
+    "ufov": [
     "ufov_final"
-  ]
+    ]
+  }  
 }

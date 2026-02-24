@@ -2,6 +2,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from pathlib import Path
 import os
+import datetime
 import arviz as az
 import numpy as np
 import math
@@ -10,17 +11,24 @@ import scipy.stats as stats
 from matplotlib.patheffects import withStroke
 import pymc as pm
 
-from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.visualize_utils import retrieve_config, \
-    set_ax_deltas
-from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.utils import get_SDDR, get_hdi_bounds, \
-    get_p_of_effect
+from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.visualize_utils import (
+    retrieve_config,
+    set_ax_deltas,
+)
+from analysis_scripts.cognitive_battery.hierarchical_bayesian_models.utils import (
+    get_SDDR,
+    get_hdi_bounds,
+    get_p_of_effect,
+)
 
-matplotlib.rc('xtick', labelsize=10)
-matplotlib.rc('ytick', labelsize=10)
+matplotlib.rc("xtick", labelsize=10)
+matplotlib.rc("ytick", labelsize=10)
 
 # Load the colors we chose to make all figures visually similar
-with open('analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/visual_features_config.json',
-          'r') as file:
+with open(
+    "analysis_scripts/cognitive_battery/hierarchical_bayesian_models/config/visual_features_config.json",
+    "r",
+) as file:
     data_colors = json.load(file)
 
 # Create global variables for the colors
@@ -29,21 +37,26 @@ for key, value in data_colors.items():
 
 
 def plot_traces_and_deltas(studies, config_fig, all_conditions, no_cdt_studies=[]):
-    '''
+    """
     This function entangled 2 figures in order to avoid looping several times on the same objects.
     :param studies:
     :param config_fig:
     :param all_conditions:
     :param no_cdt_studies:
     :return:
-    '''
+    """
     for study in studies:
-        path_study = f"outputs/{study}/cognitive_battery"
+        path_study = Path(f"outputs/{study}/cognitive_battery")
+        general_figures_path = (
+            path_study / f"figure_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        )
+        Path(general_figures_path).mkdir(exist_ok=True, parents=True)
         print(f"\n \n \n \n ===================={study}======================")
         for metric_type in all_conditions.keys():
             # Init few important variables:
-            rope_start, rope_end, xmin, xmax, figsize, dpi, y_offset, step_offset = retrieve_config(config_fig,
-                                                                                                    metric_type)
+            rope_start, rope_end, xmin, xmax, figsize, dpi, y_offset, step_offset = (
+                retrieve_config(config_fig, metric_type)
+            )
             y_offset_time = y_offset
             labels, yticks = [], []
 
@@ -66,27 +79,84 @@ def plot_traces_and_deltas(studies, config_fig, all_conditions, no_cdt_studies=[
                 path_to_store = f"{path}/visual_outputs"
                 Path(path_to_store).mkdir(parents=True, exist_ok=True)
                 # Get the trace and update the delta summary figure
-                y_offset = plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig, study,
-                                                         no_cdt_studies, path_to_store, ax, y_offset, step_offset,
-                                                         labels,
-                                                         rope_start, rope_end, yticks, fig, xmin, xmax, path, time=False,
-                                                         plot_mcmc_traces=True)
-                y_offset_time = plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig, study,
-                                                              no_cdt_studies, path_to_store, ax_time, y_offset_time,
-                                                              step_offset,
-                                                              labels,
-                                                              rope_start, rope_end, yticks, fig_time, xmin, xmax, path,
-                                                              time=True, plot_mcmc_traces=False)
+                y_offset = plot_trace_and_deltas_of_task(
+                    all_conditions,
+                    metric_type,
+                    task,
+                    config_fig,
+                    study,
+                    no_cdt_studies,
+                    path_to_store,
+                    ax,
+                    y_offset,
+                    step_offset,
+                    labels,
+                    rope_start,
+                    rope_end,
+                    yticks,
+                    fig,
+                    xmin,
+                    xmax,
+                    path,
+                    time=False,
+                    plot_mcmc_traces=True,
+                )
+                y_offset_time = plot_trace_and_deltas_of_task(
+                    all_conditions,
+                    metric_type,
+                    task,
+                    config_fig,
+                    study,
+                    no_cdt_studies,
+                    path_to_store,
+                    ax_time,
+                    y_offset_time,
+                    step_offset,
+                    labels,
+                    rope_start,
+                    rope_end,
+                    yticks,
+                    fig_time,
+                    xmin,
+                    xmax,
+                    path,
+                    time=True,
+                    plot_mcmc_traces=False,
+                )
 
-            fig.savefig(f"{path_study}/results_{metric_type}.svg", bbox_inches='tight')
-            fig_time.savefig(f"{path_study}/results_{metric_type}-time.svg", bbox_inches='tight')
+            fig.savefig(
+                f"{general_figures_path}/results_{metric_type}.svg", bbox_inches="tight"
+            )
+            fig_time.savefig(
+                f"{general_figures_path}/results_{metric_type}-time.svg",
+                bbox_inches="tight",
+            )
             plt.close()
 
 
-def plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig, study,
-                                  no_cdt_studies, path_to_store, ax, y_offset, step_offset, labels, rope_start,
-                                  rope_end, yticks, fig, xmin, xmax, path, plot_mcmc_traces=True, time=False):
-    '''
+def plot_trace_and_deltas_of_task(
+    all_conditions,
+    metric_type,
+    task,
+    config_fig,
+    study,
+    no_cdt_studies,
+    path_to_store,
+    ax,
+    y_offset,
+    step_offset,
+    labels,
+    rope_start,
+    rope_end,
+    yticks,
+    fig,
+    xmin,
+    xmax,
+    path,
+    plot_mcmc_traces=True,
+    time=False,
+):
+    """
     For each difficulty condition of a task, load the trace of the estimated parameters of all specified models
     :param all_conditions:
     :param metric_type:
@@ -107,55 +177,86 @@ def plot_trace_and_deltas_of_task(all_conditions, metric_type, task, config_fig,
     :param xmax:
     :param path_study:
     :return:
-    '''
-    for task_condition in all_conditions[metric_type][task]['conditions']:
-        for model in all_conditions[metric_type][task]['models']:
+    """
+    for task_condition in all_conditions[metric_type][task]["conditions"]:
+        for model in all_conditions[metric_type][task]["models"]:
             sddr_mu, sddr_sigma = config_fig[metric_type]["var_hyp_range_sddr"][model]
             # var_names correspond to the parameters names we want to display
-            var_names, is_a_control_study = retrieve_var_names(config_fig, metric_type, model, study,
-                                                               no_cdt_studies)
+            var_names, is_a_control_study = retrieve_var_names(
+                config_fig, metric_type, model, study, no_cdt_studies
+            )
             if os.path.exists(f"{path}/{task_condition}-{model}_inference_data.json"):
                 # Open trace
-                trace = az.from_json(f"{path}/{task_condition}-{model}_inference_data.json")
+                trace = az.from_json(
+                    f"{path}/{task_condition}-{model}_inference_data.json"
+                )
                 # First plot the trace:
                 if plot_mcmc_traces:
-                    plot_trace(trace, var_names, path_to_store=f"{path_to_store}/{task_condition}-{model}",
-                               model_type=model, task=task, condition=task_condition)
+                    plot_trace(
+                        trace,
+                        var_names,
+                        path_to_store=f"{path_to_store}/{task_condition}-{model}",
+                        model_type=model,
+                        task=task,
+                        condition=task_condition,
+                    )
                 # Second plot the deltas:
                 if time:
-                    ax, y_offset, labels, yticks = plot_deltas_time(trace, ax_deltas=ax,
-                                                                    task_condition=task_condition,
-                                                                    task=task, y_offset=y_offset,
-                                                                    step_offset=step_offset,
-                                                                    labels=labels, rope_start=rope_start,
-                                                                    rope_end=rope_end, yticks=yticks,
-                                                                    model=model,
-                                                                    no_condition=is_a_control_study, study=study,
-                                                                    sddr_mu=sddr_mu, sddr_sigma=sddr_sigma,
-                                                                    xmax=xmax, add_pre=True, config_fig=config_fig,
-                                                                    metric_type=metric_type)
+                    ax, y_offset, labels, yticks = plot_deltas_time(
+                        trace,
+                        ax_deltas=ax,
+                        task_condition=task_condition,
+                        task=task,
+                        y_offset=y_offset,
+                        step_offset=step_offset,
+                        labels=labels,
+                        rope_start=rope_start,
+                        rope_end=rope_end,
+                        yticks=yticks,
+                        model=model,
+                        no_condition=is_a_control_study,
+                        study=study,
+                        sddr_mu=sddr_mu,
+                        sddr_sigma=sddr_sigma,
+                        xmax=xmax,
+                        add_pre=True,
+                        config_fig=config_fig,
+                        metric_type=metric_type,
+                    )
                 else:
                     # Second plot the deltas:
-                    ax, y_offset, labels, yticks = plot_deltas(trace, ax_deltas=ax,
-                                                               task_condition=task_condition,
-                                                               task=task, y_offset=y_offset,
-                                                               step_offset=step_offset,
-                                                               labels=labels, rope_start=rope_start,
-                                                               rope_end=rope_end, yticks=yticks,
-                                                               model=model,
-                                                               no_condition=is_a_control_study, study=study,
-                                                               sddr_mu=sddr_mu, sddr_sigma=sddr_sigma,
-                                                               xmax=xmax, add_pre=True, config_fig=config_fig,
-                                                               metric_type=metric_type)
+                    ax, y_offset, labels, yticks = plot_deltas(
+                        trace,
+                        ax_deltas=ax,
+                        task_condition=task_condition,
+                        task=task,
+                        y_offset=y_offset,
+                        step_offset=step_offset,
+                        labels=labels,
+                        rope_start=rope_start,
+                        rope_end=rope_end,
+                        yticks=yticks,
+                        model=model,
+                        no_condition=is_a_control_study,
+                        study=study,
+                        sddr_mu=sddr_mu,
+                        sddr_sigma=sddr_sigma,
+                        xmax=xmax,
+                        add_pre=True,
+                        config_fig=config_fig,
+                        metric_type=metric_type,
+                    )
             # Add margin between task condition:
             y_offset += step_offset
         # Add lines to separate between tasks
-        y_offset = add_visual_features_to_delta(fig, ax, y_offset, step_offset, xmin, xmax, labels, yticks)
+        y_offset = add_visual_features_to_delta(
+            fig, ax, y_offset, step_offset, xmin, xmax, labels, yticks
+        )
     return y_offset
 
 
 def retrieve_var_names(config_fig, metric_type, model, study, no_cdt_studies):
-    '''
+    """
     It is possible that for some study, no group condition is used (typically for control group). As such, models are
     fitted without 'delta btw groups' parameter distribution (when it is the case, this function detects and deletes the
     'delta' parameters)
@@ -165,7 +266,7 @@ def retrieve_var_names(config_fig, metric_type, model, study, no_cdt_studies):
     :param study:
     :param no_cdt_studies: e.g 'v0_prolific'
     :return:
-    '''
+    """
     var_names = config_fig[metric_type]["var_specifics"][model]
     # Make sure that var_names are correct if no conditions:
     is_a_control_study = study in no_cdt_studies
@@ -174,7 +275,9 @@ def retrieve_var_names(config_fig, metric_type, model, study, no_cdt_studies):
     return var_names, is_a_control_study
 
 
-def add_visual_features_to_delta(fig, ax, y_offset, step_offset, xmin, xmax, labels, yticks):
+def add_visual_features_to_delta(
+    fig, ax, y_offset, step_offset, xmin, xmax, labels, yticks
+):
     # Add lines to separate between tasks:
     ax.hlines(y=y_offset - step_offset / 2, xmin=xmin, xmax=xmax, color="black")
     y_offset += step_offset
@@ -194,15 +297,22 @@ def add_visual_features_to_delta(fig, ax, y_offset, step_offset, xmin, xmax, lab
 
 def plot_vline(rope_start, rope_end, ax):
     # Adding vertical lines
-    ax.axvline(x=rope_start, color='gray', linestyle='--')
-    ax.axvline(x=rope_end, color='gray', linestyle='--')
+    ax.axvline(x=rope_start, color="gray", linestyle="--")
+    ax.axvline(x=rope_end, color="gray", linestyle="--")
 
 
 def plot_vline_0(ax):
-    ax.axvline(x=0, color='red', linestyle='--')
+    ax.axvline(x=0, color="red", linestyle="--")
 
 
-def plot_trace(trace, var_names, path_to_store, model_type="hierarbinom", task="mot", condition="all"):
+def plot_trace(
+    trace,
+    var_names,
+    path_to_store,
+    model_type="hierarbinom",
+    task="mot",
+    condition="all",
+):
     az.plot_trace(trace, var_names=var_names, compact=True, legend=True)
     plt.suptitle(f"{task} - {condition}")
     plt.tight_layout()
@@ -210,10 +320,27 @@ def plot_trace(trace, var_names, path_to_store, model_type="hierarbinom", task="
     plt.close()
 
 
-def plot_deltas(trace, ax_deltas=None, task_condition="5-nb-targets", task="moteval", y_offset=0,
-                step_offset=0.2, labels=[], rope_start=-0.05, rope_end=0.05, yticks=[], model="hierarbinom",
-                no_condition=False, study="v3_prolific", sddr_mu=0, sddr_sigma=0.05, xmax=0.3, add_pre=True,
-                config_fig=None, metric_type=None):
+def plot_deltas(
+    trace,
+    ax_deltas=None,
+    task_condition="5-nb-targets",
+    task="moteval",
+    y_offset=0,
+    step_offset=0.2,
+    labels=[],
+    rope_start=-0.05,
+    rope_end=0.05,
+    yticks=[],
+    model="hierarbinom",
+    no_condition=False,
+    study="v3_prolific",
+    sddr_mu=0,
+    sddr_sigma=0.05,
+    xmax=0.3,
+    add_pre=True,
+    config_fig=None,
+    metric_type=None,
+):
     # plt.figure(figsize=figsize)
     # plot_distribution_of_deltas(deltas, data_pre)
     vars = ["delta_zpdes", "delta_baseline"]
@@ -225,13 +352,18 @@ def plot_deltas(trace, ax_deltas=None, task_condition="5-nb-targets", task="mote
     # We display the probability to see an effect:
     probas = [get_p_of_effect(trace, var) for var in vars]
     hdis = [get_hdi_bounds(trace, var) for var in vars]
-    sddrs = [get_SDDR(trace, var, parameter_priors={'mu': sddr_mu, 'sigma': sddr_sigma}) for var in vars]
+    sddrs = [
+        get_SDDR(trace, var, parameter_priors={"mu": sddr_mu, "sigma": sddr_sigma})
+        for var in vars
+    ]
     if model != "hierar_binom_n_var":
         labels += ["", f"{task}_{task_condition} \n {model}", ""]
     else:
         labels += ["", f"{task}_{task_condition}", ""]
     if add_pre:
-        p, sddr, hdi = get_time_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma, time="pre")
+        p, sddr, hdi = get_time_bar(
+            config_fig, metric_type, model, trace, sddr_mu, sddr_sigma, time="pre"
+        )
         probas.append(p)
         sddrs.append(sddr)
         hdis.append(hdi)
@@ -239,21 +371,54 @@ def plot_deltas(trace, ax_deltas=None, task_condition="5-nb-targets", task="mote
         color_txt.append("white")
         condition.append("diff_pre")
         labels.append("")
-        yticks += [y_offset, y_offset + step_offset / 2, y_offset + step_offset, y_offset + (2 * step_offset)]
+        yticks += [
+            y_offset,
+            y_offset + step_offset / 2,
+            y_offset + step_offset,
+            y_offset + (2 * step_offset),
+        ]
     else:
         yticks += [y_offset, y_offset + step_offset / 2, y_offset + step_offset]
-    for delta, p, sddr, c_b, c_t, c_l in zip(hdis, probas, sddrs, color_bars, color_txt, condition):
-        ax_deltas = plot_barh(delta, p, sddr, ax_deltas, height=0.5, color_bar=c_b, color_txt=c_t,
-                              label=f"{task}_{task_condition}",
-                              y_offset=y_offset, xmax=xmax)
+    for delta, p, sddr, c_b, c_t, c_l in zip(
+        hdis, probas, sddrs, color_bars, color_txt, condition
+    ):
+        ax_deltas = plot_barh(
+            delta,
+            p,
+            sddr,
+            ax_deltas,
+            height=0.5,
+            color_bar=c_b,
+            color_txt=c_t,
+            label=f"{task}_{task_condition}",
+            y_offset=y_offset,
+            xmax=xmax,
+        )
         y_offset += step_offset
     return ax_deltas, y_offset, labels, yticks
 
 
-def plot_deltas_time(trace, ax_deltas=None, task_condition="5-nb-targets", task="moteval", y_offset=0,
-                     step_offset=0.2, labels=[], rope_start=-0.05, rope_end=0.05, yticks=[], model="hierarbinom",
-                     no_condition=False, study="v3_prolific", sddr_mu=0, sddr_sigma=0.05, xmax=0.3, add_pre=True,
-                     config_fig=None, metric_type=None):
+def plot_deltas_time(
+    trace,
+    ax_deltas=None,
+    task_condition="5-nb-targets",
+    task="moteval",
+    y_offset=0,
+    step_offset=0.2,
+    labels=[],
+    rope_start=-0.05,
+    rope_end=0.05,
+    yticks=[],
+    model="hierarbinom",
+    no_condition=False,
+    study="v3_prolific",
+    sddr_mu=0,
+    sddr_sigma=0.05,
+    xmax=0.3,
+    add_pre=True,
+    config_fig=None,
+    metric_type=None,
+):
     # plot_distribution_of_deltas(deltas, data_pre)
     probas, hdis, sddrs = [], [], []
     sessions = ["pre", "post", "post-pre"]
@@ -261,7 +426,9 @@ def plot_deltas_time(trace, ax_deltas=None, task_condition="5-nb-targets", task=
     color_txt = ["white"] * 3
     conditions = []
     for session in sessions:
-        p, sddr, hdi = get_time_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma, time=session)
+        p, sddr, hdi = get_time_bar(
+            config_fig, metric_type, model, trace, sddr_mu, sddr_sigma, time=session
+        )
         probas.append(p)
         sddrs.append(sddr)
         hdis.append(hdi)
@@ -271,22 +438,42 @@ def plot_deltas_time(trace, ax_deltas=None, task_condition="5-nb-targets", task=
         labels += ["", f"{task}_{task_condition} \n {model}", "", ""]
     else:
         labels += ["", f"{task}_{task_condition}", "", ""]
-    yticks += [y_offset, y_offset + step_offset / 2, y_offset + step_offset, y_offset + (2 * step_offset)]
-    for delta, p, sddr, c_b, c_t, c_l in zip(hdis, probas, sddrs, color_bars, color_txt, conditions):
-        ax_deltas = plot_barh(delta, p, sddr, ax_deltas, height=0.5, color_bar=c_b, color_txt=c_t,
-                              label=f"{task}_{task_condition}",
-                              y_offset=y_offset, xmax=xmax)
+    yticks += [
+        y_offset,
+        y_offset + step_offset / 2,
+        y_offset + step_offset,
+        y_offset + (2 * step_offset),
+    ]
+    for delta, p, sddr, c_b, c_t, c_l in zip(
+        hdis, probas, sddrs, color_bars, color_txt, conditions
+    ):
+        ax_deltas = plot_barh(
+            delta,
+            p,
+            sddr,
+            ax_deltas,
+            height=0.5,
+            color_bar=c_b,
+            color_txt=c_t,
+            label=f"{task}_{task_condition}",
+            y_offset=y_offset,
+            xmax=xmax,
+        )
         y_offset += step_offset
     return ax_deltas, y_offset, labels, yticks
 
 
-def get_time_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma, time="pre"):
+def get_time_bar(
+    config_fig, metric_type, model, trace, sddr_mu, sddr_sigma, time="pre"
+):
     if time == "pre":
         session = 0
     elif time == "post":
         session = 1
     else:
-        return get_post_pre_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma)
+        return get_post_pre_bar(
+            config_fig, metric_type, model, trace, sddr_mu, sddr_sigma
+        )
     var = config_fig[metric_type]["var_delta_btw_study"][model]
     trace_var = trace.posterior[var]
     trace_diff = trace_var[:, :, 1, session] - trace_var[:, :, 0, session]
@@ -322,25 +509,63 @@ def get_post_pre_bar(config_fig, metric_type, model, trace, sddr_mu, sddr_sigma)
     return proba, sddr[0], hdi
 
 
-def plot_barh(hdi, proba, sddr, ax, color_bar, height=0.3, label="delta_zpdes", color_txt='black', y_offset=0,
-              xmax=0.3):
+def plot_barh(
+    hdi,
+    proba,
+    sddr,
+    ax,
+    color_bar,
+    height=0.3,
+    label="delta_zpdes",
+    color_txt="black",
+    y_offset=0,
+    xmax=0.3,
+):
     # Plot the HDIs
-    ax.barh(y_offset, width=(hdi[1] - hdi[0]), left=hdi[0], height=height, align='center', alpha=1, label=label,
-            color=color_bar, edgecolor='black')
+    ax.barh(
+        y_offset,
+        width=(hdi[1] - hdi[0]),
+        left=hdi[0],
+        height=height,
+        align="center",
+        alpha=1,
+        label=label,
+        color=color_bar,
+        edgecolor="black",
+    )
     # Displaying the probabilities in the middle of the bars
     proba_label = "" if math.isclose(proba, 0, abs_tol=0.01) else f"{proba:.1%}"
     center = hdi[0] + (hdi[1] - hdi[0]) / 2
-    ax.text(center, y_offset, proba_label, ha='center', va='center', color=color_txt, fontsize=10, fontweight='bold',
-            path_effects=[withStroke(linewidth=1, foreground='black')])
-    ax.text(0.85 * xmax, y_offset, f"{1 / sddr:.2f}", ha='center', va='center', color='black', fontsize=9,
-            fontweight='bold',
-            bbox=dict(facecolor='white', edgecolor='none', pad=1))
+    ax.text(
+        center,
+        y_offset,
+        proba_label,
+        ha="center",
+        va="center",
+        color=color_txt,
+        fontsize=10,
+        fontweight="bold",
+        path_effects=[withStroke(linewidth=1, foreground="black")],
+    )
+    ax.text(
+        0.85 * xmax,
+        y_offset,
+        f"{1 / sddr:.2f}",
+        ha="center",
+        va="center",
+        color="black",
+        fontsize=9,
+        fontweight="bold",
+        bbox=dict(facecolor="white", edgecolor="none", pad=1),
+    )
     return ax
 
 
 def render_model_graph(model, path_to_store, name):
-    path_to_store = '' + '/'.join(filter(bool, path_to_store.split('/')[:-1])) + '/models/'
+    path_to_store = (
+        "" + "/".join(filter(bool, path_to_store.split("/")[:-1])) + "/models/"
+    )
     Path(path_to_store).mkdir(parents=True, exist_ok=True)
     gv = pm.model_to_graphviz(model)
-    gv.format = 'png'
+    gv.format = "png"
     gv.render(filename=f"{path_to_store}/{name}-graphviz")

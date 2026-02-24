@@ -1,0 +1,37 @@
+{
+  "accuracy":{
+    "figsizex": 6,
+    "figsizey": 4,
+    "xmin": -0.2,
+    "xmax": 0.25,
+    "rope_start": -0.05,
+    "rope_end": 0.05,
+    "var_specifics": {
+      "hierarbinom": ["beta", "sigma", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "hierar_binom_covar_pre": ["beta", "sigma", "pretest_coeff", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "hierar_binom_gain": ["beta", "sigma", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "hierar_binom_n_var": ["beta", "sigma", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "hierar_binom_n_gain": ["beta", "sigma", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "precision_normal_hyper": ["mu","sigma","mu_hyper", "sigma_hyper", "delta_zpdes", "delta_baseline", "delta_groups"],
+      "precision_normal": ["mu", "sigma", "delta_zpdes", "delta_baseline", "delta_groups"]
+    },
+    "var_delta_btw_study": {
+      "hierarbinom": "beta",
+      "hierar_binom_covar_pre": "beta",
+      "hierar_binom_gain": "beta",
+      "hierar_binom_n_var": "beta",
+      "hierar_binom_n_gain": "beta",
+      "precision_normal_hyper": "mu",
+      "precision_normal": "mu"
+    },
+    "var_hyp_range_sddr": {
+      "hierarbinom": [0, 0.05],
+      "hierar_binom_n_gain": [0, 0.1],
+      "hierar_binom_covar_pre": [0, 0.01],
+      "hierar_binom_gain": [0, 0.2],
+      "hierar_binom_n_var": [0, 0.05],
+      "precision_normal_hyper": [0, 0.05],
+      "precision_normal": [0, 0.05]
+    }
+  }
+}
